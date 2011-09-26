@@ -74,7 +74,7 @@ static ssize_t hashset_bucket_count(const struct hashset *s)
 }
 
 static void hashset_init_sized(struct hashset *s,
-			       uint32_t (*hash)(const void *),
+			       size_t (*hash)(const void *),
 		  bool (*equals)(const void *, const void *),
 		  ssize_t num_buckets, size_t elt_size)
 {
@@ -139,7 +139,7 @@ static void hashset_grow_delta(struct hashset *s, ssize_t delta)
 	*s = copy;
 }
 
-void hashset_init(struct hashset *s, uint32_t (*hash)(const void *),
+void hashset_init(struct hashset *s, size_t (*hash)(const void *),
 		  bool (*equals)(const void *, const void *),
 		  size_t elt_size)
 {
@@ -302,7 +302,7 @@ void *hashset_find(const struct hashset *s, const void *key,
 	const size_t elt_size = s->elt_size;
 	ssize_t num_probes = 0;	// how many times we've probed
 	const ssize_t bucket_count_minus_one = bucket_count - 1;
-	uint32_t hash = hashset_hash(s, key);
+	size_t hash = hashset_hash(s, key);
 	ssize_t bucknum = hash & bucket_count_minus_one;
 	void *ptr;
 	bool full, deleted;

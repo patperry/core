@@ -11,7 +11,7 @@
 #include "hashset.h"
 
 
-static uint32_t int_hash(const void *x)
+static size_t int_hash(const void *x)
 {
 	return *(int *)x;
 }
@@ -21,14 +21,14 @@ static bool int_equals(const void *x, const void *y)
 	return *(int *)x == *(int *)y;
 }
 
-static uint32_t int_bad_hash(const void *x)
+static size_t int_bad_hash(const void *x)
 {
 	(void)x; // unused
 	return 1337;
 }
 
 static struct hashset set;
-static uint32_t (*hash) (const void *);
+static size_t (*hash) (const void *);
 static bool (*equals) (const void *, const void *);
 static int *vals;
 static ssize_t count;
