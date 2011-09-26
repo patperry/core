@@ -3,18 +3,16 @@
 
 #include <stddef.h>
 
-#define  HASHSET_BIN_FULL    1
-#define  HASHSET_BIN_DELETED 2
 
 struct hashset {
 	size_t width;
 	size_t (*hash) (const void *);
 	int (*compar) (const void *, const void *);
 
+	size_t nbucket;	
 	void *buckets;
-	size_t nbucket;
+	unsigned char *status;
 
-	uint8_t *status;
 	size_t count;
 	size_t enlarge_threshold;	// (table size) * enlarge_factor
 };

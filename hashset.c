@@ -2,12 +2,15 @@
 #include <limits.h>    // CHAR_BIT
 #include <stdbool.h>   // bool
 #include <stddef.h>    // size_t, NULL
-#include <stdint.h>    // uint8_t, uint16_t
 #include <stdlib.h>    // free
 #include <string.h>    // memset, memmove, memcpy
 #include "xalloc.h"    // xrealloc
 
 #include "hashset.h"
+
+#define  HT_BUCKET_FULL    1
+#define  HT_BUCKET_DELETED 2
+
 
 /* The probing method */
 /* #define JUMP_(key, num_probes) (1)          // Linear probing */
@@ -57,7 +60,7 @@ static size_t min_buckets(size_t count, size_t nbucket0)
 	size_t n = HT_MIN_BUCKETS;	// min buckets allowed
 	
 	while (n < nbucket0 || count > PERCENT(HT_OCCUPANCY_PCT, n)) {
-		assert(n < SIZE_MAX / 2);
+		assert(2 * n > n);
 		n *= 2;
 	}
 
@@ -89,13 +92,12 @@ static void hashset_init_sized(struct hashset *s,
 	assert(compar);
 	assert(nbucket >= HT_MIN_BUCKETS);
 
-	s->buckets = xcalloc(nbucket, width);
+	hashset_init(s, width, hash, compar);
+
 	s->nbucket = nbucket;
-	s->width = width;
+	s->buckets = xcalloc(nbucket, width);
 	s->status = xcalloc(nbucket, sizeof(s->status[0]));
-	s->count = 0;
-	s->hash = hash;
-	s->compar = compar;
+
 	hashset_reset_thresholds(s, nbucket);
 }
 
@@ -135,7 +137,7 @@ static bool hashset_needs_grow_delta(const struct hashset *s, size_t delta)
 
 static void hashset_grow_delta(struct hashset *s, size_t delta)
 {
-	assert(delta <=  HT_MAX_COUNT - s->nbucket);
+	assert(delta <= HT_MAX_COUNT - s->nbucket);
 
 	size_t count0 = s->count;
 	size_t nbucket0 = s->nbucket;
@@ -156,9 +158,15 @@ void hashset_init(struct hashset *s,
 	assert(s);
 	assert(hash);
 	assert(compar);
-
-	size_t nbucket = HT_DEFAULT_STARTING_BUCKETS;
-	hashset_init_sized(s, width, hash, compar, nbucket);
+	
+	s->buckets = NULL;
+	s->nbucket = 0;
+	s->width = width;
+	s->status = NULL;
+	s->count = 0;
+	s->hash = hash;
+	s->compar = compar;
+	hashset_reset_thresholds(s, 0);
 }
 
 void hashset_init_copy(struct hashset *s, const struct hashset *src)
@@ -305,7 +313,7 @@ void *hashset_find(const struct hashset *s, const void *key,
 	assert(pos);
 
 	const void *buckets = s->buckets;
-	const uint8_t *status = s->status;
+	const unsigned char *status = s->status;
 	const size_t bucket_count = s->nbucket;
 	const size_t width = s->width;
 	size_t num_probes = 0;	// how many times we've probed
@@ -321,8 +329,8 @@ void *hashset_find(const struct hashset *s, const void *key,
 
 	for (num_probes = 0; num_probes < bucket_count; num_probes++) {
 		ptr = (char *)buckets + bucknum * width;
-		full = status[bucknum] & HASHSET_BIN_FULL;
-		deleted = status[bucknum] & HASHSET_BIN_DELETED;
+		full = status[bucknum] & HT_BUCKET_FULL;
+		deleted = status[bucknum] & HT_BUCKET_DELETED;
 		if (!full && !deleted) {	// bucket is empty
 			if (!pos->has_insert) {	// found no prior place to insert
 				pos->insert = bucknum;
@@ -369,7 +377,7 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 	size_t width = s->width;
 	
 	s->count++;
-	s->status[ix] |= HASHSET_BIN_FULL;
+	s->status[ix] |= HT_BUCKET_FULL;
 	
 	void *ptr = s->buckets + ix * width;
 	if (key) {
@@ -391,7 +399,7 @@ void hashset_remove_at(struct hashset *s, struct hashset_pos *pos)
 	size_t width = s->width;
 	s->count--;
 	memset(s->buckets + ix * width, 0, width);
-	s->status[ix] = HASHSET_BIN_DELETED;
+	s->status[ix] = HT_BUCKET_DELETED;
 }
 
 struct hashset_iter hashset_iter_make(const struct hashset *s)
@@ -417,11 +425,11 @@ void *hashset_iter_advance(struct hashset_iter *it)
 	assert(it);
 
 	const struct hashset *s = it->s;
-	const uint8_t *status = it->s->status;
+	const unsigned char *status = it->s->status;
 	size_t i, n = hashset_bucket_count(s);
 	
 	for (i = it->i; i < n; i++) {
-		if (status[i] & HASHSET_BIN_FULL) {
+		if (status[i] & HT_BUCKET_FULL) {
 			it->val = s->buckets + i * s->width;
 			goto out;
 		}
