@@ -75,12 +75,12 @@ static ssize_t hashset_bucket_count(const struct hashset *s)
 
 static void hashset_init_sized(struct hashset *s,
 			       size_t (*hash)(const void *),
-		  bool (*equals)(const void *, const void *),
-		  ssize_t num_buckets, size_t elt_size)
+			       int (*compar)(const void *, const void *),
+			       ssize_t num_buckets, size_t elt_size)
 {
 	assert(s);
 	assert(hash);
-	assert(equals);
+	assert(compar);
 	assert(num_buckets >= HT_MIN_BUCKETS);
 
 	s->array = xcalloc(num_buckets, elt_size);
@@ -89,7 +89,7 @@ static void hashset_init_sized(struct hashset *s,
 	s->status = xcalloc(num_buckets, sizeof(s->status[0]));
 	s->count = 0;
 	s->hash = hash;
-	s->equals = equals;
+	s->compar = compar;
 	hashset_reset_thresholds(s, num_buckets);
 }
 
@@ -105,7 +105,7 @@ static void hashset_init_copy_sized(struct hashset *s,
 	struct hashset_iter it;
 	const void *key;
 
-	hashset_init_sized(s, src->hash, src->equals, num_buckets,
+	hashset_init_sized(s, src->hash, src->compar, num_buckets,
 			   hashset_elt_size(src));
 
 	HASHSET_FOREACH(it, src) {
@@ -140,15 +140,15 @@ static void hashset_grow_delta(struct hashset *s, ssize_t delta)
 }
 
 void hashset_init(struct hashset *s, size_t (*hash)(const void *),
-		  bool (*equals)(const void *, const void *),
+		  int (*compar)(const void *, const void *),
 		  size_t elt_size)
 {
 	assert(s);
 	assert(hash);
-	assert(equals);
+	assert(compar);
 
 	ssize_t num_buckets = HT_DEFAULT_STARTING_BUCKETS;
-	hashset_init_sized(s, hash, equals, num_buckets, elt_size);
+	hashset_init_sized(s, hash, compar, num_buckets, elt_size);
 }
 
 void hashset_init_copy(struct hashset *s, const struct hashset *src)
@@ -327,7 +327,7 @@ void *hashset_find(const struct hashset *s, const void *key,
 				pos->insert = bucknum;
 				pos->has_insert = true;
 			}
-		} else if (hashset_equals(s, key, ptr)) {
+		} else if (!hashset_compare(s, key, ptr)) {
 			pos->existing = bucknum;
 			pos->has_existing = true;
 			return ptr;

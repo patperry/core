@@ -16,9 +16,9 @@ static size_t int_hash(const void *x)
 	return *(int *)x;
 }
 
-static bool int_equals(const void *x, const void *y)
+static int int_compar(const void *x, const void *y)
 {
-	return *(int *)x == *(int *)y;
+	return *(int *)x - *(int *)y;
 }
 
 static size_t int_bad_hash(const void *x)
@@ -29,7 +29,7 @@ static size_t int_bad_hash(const void *x)
 
 static struct hashset set;
 static size_t (*hash) (const void *);
-static bool (*equals) (const void *, const void *);
+static int (*compar) (const void *, const void *);
 static int *vals;
 static ssize_t count;
 
@@ -50,8 +50,8 @@ static void empty_setup()
 	static int *empty_vals = NULL;
 
 	hash = int_hash;
-	equals = int_equals;
-	hashset_init(&set, hash, equals, sizeof(int));
+	compar = int_compar;
+	hashset_init(&set, hash, compar, sizeof(int));
 	
 	vals = empty_vals;
 	count = 0;
@@ -97,8 +97,8 @@ static void big_bad_setup_fixture()
 static void big_bad_setup()
 {
 	hash = int_bad_hash;
-	equals = int_equals;
-	hashset_init(&set, hash, equals, sizeof(int));
+	compar = int_compar;
+	hashset_init(&set, hash, compar, sizeof(int));
 	
 	count = 151;
 	vals = malloc(count * sizeof(*vals));
