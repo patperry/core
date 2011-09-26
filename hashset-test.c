@@ -51,7 +51,7 @@ static void empty_setup()
 
 	hash = int_hash;
 	compar = int_compar;
-	hashset_init(&set, hash, compar, sizeof(int));
+	hashset_init(&set, sizeof(int), hash, compar);
 	
 	vals = empty_vals;
 	count = 0;
@@ -98,7 +98,7 @@ static void big_bad_setup()
 {
 	hash = int_bad_hash;
 	compar = int_compar;
-	hashset_init(&set, hash, compar, sizeof(int));
+	hashset_init(&set, sizeof(int), hash, compar);
 	
 	count = 151;
 	vals = malloc(count * sizeof(*vals));

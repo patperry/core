@@ -74,18 +74,19 @@ static ssize_t hashset_bucket_count(const struct hashset *s)
 }
 
 static void hashset_init_sized(struct hashset *s,
+			       size_t width,
 			       size_t (*hash)(const void *),
 			       int (*compar)(const void *, const void *),
-			       ssize_t num_buckets, size_t elt_size)
+			       ssize_t num_buckets)
 {
 	assert(s);
 	assert(hash);
 	assert(compar);
 	assert(num_buckets >= HT_MIN_BUCKETS);
 
-	s->array = xcalloc(num_buckets, elt_size);
+	s->array = xcalloc(num_buckets, width);
 	s->num_buckets = num_buckets;
-	s->elt_size = elt_size;
+	s->width = width;
 	s->status = xcalloc(num_buckets, sizeof(s->status[0]));
 	s->count = 0;
 	s->hash = hash;
@@ -105,8 +106,7 @@ static void hashset_init_copy_sized(struct hashset *s,
 	struct hashset_iter it;
 	const void *key;
 
-	hashset_init_sized(s, src->hash, src->compar, num_buckets,
-			   hashset_elt_size(src));
+	hashset_init_sized(s, src->width, src->hash, src->compar, num_buckets);
 
 	HASHSET_FOREACH(it, src) {
 		key = HASHSET_KEY(it);
@@ -139,16 +139,17 @@ static void hashset_grow_delta(struct hashset *s, ssize_t delta)
 	*s = copy;
 }
 
-void hashset_init(struct hashset *s, size_t (*hash)(const void *),
-		  int (*compar)(const void *, const void *),
-		  size_t elt_size)
+void hashset_init(struct hashset *s,
+		  size_t width,
+		  size_t (*hash)(const void *),
+		  int (*compar)(const void *, const void *))
 {
 	assert(s);
 	assert(hash);
 	assert(compar);
 
 	ssize_t num_buckets = HT_DEFAULT_STARTING_BUCKETS;
-	hashset_init_sized(s, hash, compar, num_buckets, elt_size);
+	hashset_init_sized(s, width, hash, compar, num_buckets);
 }
 
 void hashset_init_copy(struct hashset *s, const struct hashset *src)
@@ -196,8 +197,7 @@ void *hashset_set_item(struct hashset *s, const void *key)
 	void *dst;
 
 	if ((dst = hashset_find(s, key, &pos))) {
-		memcpy(dst, key, hashset_elt_size(s));
-		return dst;
+		return memcpy(dst, key, s->width);
 	} else {
 		return hashset_insert(s, &pos, key);
 	}
@@ -221,9 +221,8 @@ void hashset_clear(struct hashset *s)
 	assert(s);
 
 	ssize_t n = hashset_bucket_count(s);
-	size_t elt_size = hashset_elt_size(s);
 	
-	memset(s->array, 0, n * elt_size);
+	memset(s->array, 0, n * s->width);
 	memset(s->status, 0, n * sizeof(s->status[0]));
 	s->count = 0;
 }
@@ -299,7 +298,7 @@ void *hashset_find(const struct hashset *s, const void *key,
 	const void *array = s->array;
 	const uint8_t *status = s->status;
 	const ssize_t bucket_count = s->num_buckets;
-	const size_t elt_size = s->elt_size;
+	const size_t width = s->width;
 	ssize_t num_probes = 0;	// how many times we've probed
 	const ssize_t bucket_count_minus_one = bucket_count - 1;
 	size_t hash = hashset_hash(s, key);
@@ -312,7 +311,7 @@ void *hashset_find(const struct hashset *s, const void *key,
 	pos->has_existing = false;
 
 	for (num_probes = 0; num_probes < bucket_count; num_probes++) {
-		ptr = (char *)array + bucknum * elt_size;
+		ptr = (char *)array + bucknum * width;
 		full = status[bucknum] & HASHSET_BIN_FULL;
 		deleted = status[bucknum] & HASHSET_BIN_DELETED;
 		if (!full && !deleted) {	// bucket is empty
@@ -357,14 +356,14 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 	assert(pos->has_insert);
 
 	ssize_t ix = pos->insert;
-	ssize_t elt_size = hashset_elt_size(s);
+	ssize_t width = s->width;
 	
 	s->count++;
 	s->status[ix] |= HASHSET_BIN_FULL;
 	
-	void *ptr = s->array + ix * elt_size;
+	void *ptr = s->array + ix * width;
 	if (key) {
-		memcpy(ptr, key, elt_size);
+		memcpy(ptr, key, width);
 	}
 	
 	return ptr;
@@ -377,9 +376,9 @@ void hashset_remove_at(struct hashset *s, struct hashset_pos *pos)
 	assert(pos->has_existing);
 
 	ssize_t ix = pos->existing;
-	size_t elt_size = s->elt_size;
+	size_t width = s->width;
 	s->count--;
-	memset(s->array + ix * elt_size, 0, elt_size);
+	memset(s->array + ix * width, 0, width);
 	s->status[ix] = HASHSET_BIN_DELETED;
 }
 
@@ -411,7 +410,7 @@ void *hashset_iter_advance(struct hashset_iter *it)
 	
 	for (i = it->i; i < n; i++) {
 		if (status[i] & HASHSET_BIN_FULL) {
-			it->val = s->array + i * s->elt_size;
+			it->val = s->array + i * s->width;
 			goto out;
 		}
 	}

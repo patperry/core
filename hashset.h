@@ -9,9 +9,9 @@
 struct hashset {
 	void *array;
 	ssize_t num_buckets;
-	size_t elt_size;
+	size_t width;
 	uint8_t *status;
-	ssize_t count;	
+	ssize_t count;
 	size_t (*hash) (const void *);
 	int (*compar) (const void *, const void *);
 	ssize_t enlarge_threshold;	// (table size) * enlarge_factor
@@ -35,16 +35,16 @@ struct hashset_iter {
 	for ((it) = hashset_iter_make(set); hashset_iter_advance(&(it));)
 
 /* create, destroy */
-void hashset_init(struct hashset *s, size_t (*hash)(const void *),
-		  int (*compar)(const void *, const void *),
-		  size_t elt_size);
+void hashset_init(struct hashset *s, size_t width,
+		  size_t (*hash)(const void *),
+		  int (*compar)(const void *, const void *));
 void hashset_init_copy(struct hashset *s, const struct hashset *src);
 void hashset_assign_copy(struct hashset *s, const struct hashset *src);
 void hashset_deinit(struct hashset *s);
 
 /* properties */
 static inline ssize_t hashset_count(const struct hashset *s);
-static inline size_t hashset_elt_size(const struct hashset *s);
+static inline size_t hashset_width(const struct hashset *s);
 static inline int hashset_compare(const struct hashset *s, const void *key1,
 				  const void *key2);
 static inline size_t hashset_hash(const struct hashset *s, const void *key);
@@ -77,9 +77,9 @@ ssize_t hashset_count(const struct hashset *s)
 	return s->count;
 }
 
-size_t hashset_elt_size(const struct hashset *s)
+size_t hashset_width(const struct hashset *s)
 {
-	return s->elt_size;
+	return s->width;
 }
 
 static inline int hashset_compare(const struct hashset *s, const void *key1,
