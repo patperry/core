@@ -12,17 +12,17 @@ struct hashset {
 	int (*compar) (const void *, const void *);
 
 	void *buckets;
-	
-	ssize_t num_buckets;
+	size_t nbucket;
+
 	uint8_t *status;
-	ssize_t count;
-	ssize_t enlarge_threshold;	// (table size) * enlarge_factor
+	size_t count;
+	size_t enlarge_threshold;	// (table size) * enlarge_factor
 };
 
 struct hashset_pos {
 	size_t hash;
-	ssize_t insert;
-	ssize_t existing;
+	size_t insert;
+	size_t existing;
 	bool has_existing;
 	bool has_insert;
 };
@@ -45,7 +45,7 @@ void hashset_assign_copy(struct hashset *s, const struct hashset *src);
 void hashset_deinit(struct hashset *s);
 
 /* properties */
-static inline ssize_t hashset_count(const struct hashset *s);
+static inline size_t hashset_count(const struct hashset *s);
 static inline size_t hashset_width(const struct hashset *s);
 static inline int hashset_compare(const struct hashset *s, const void *key1,
 				  const void *key2);
@@ -74,7 +74,7 @@ void hashset_iter_reset(struct hashset_iter *it);
 void *hashset_iter_advance(struct hashset_iter *it);
 
 /* static method definitions */
-ssize_t hashset_count(const struct hashset *s)
+size_t hashset_count(const struct hashset *s)
 {
 	return s->count;
 }

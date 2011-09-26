@@ -2,7 +2,6 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <setjmp.h>
@@ -31,7 +30,7 @@ static struct hashset set;
 static size_t (*hash) (const void *);
 static int (*compar) (const void *, const void *);
 static int *vals;
-static ssize_t count;
+static size_t count;
 
 
 static void empty_setup_fixture()
@@ -74,7 +73,7 @@ static void big_setup()
 	
 	count = 555;
 	vals = malloc(count * sizeof(*vals));
-	ssize_t i;
+	size_t i;
 	
 	for (i = 0; i < count; i++) {
 		vals[i] = (int)i;
@@ -102,7 +101,7 @@ static void big_bad_setup()
 	
 	count = 151;
 	vals = malloc(count * sizeof(*vals));
-	ssize_t i;
+	size_t i;
 	
 	for (i = 0; i < count; i++) {
 		vals[i] = (int)i;
@@ -130,7 +129,7 @@ static void test_clear()
 
 static void test_lookup()
 {
-	ssize_t i;
+	size_t i;
 	const int *val;
 	
 	for (i = 0; i < count; i++) {
@@ -175,7 +174,7 @@ static void test_remove()
 
 static void test_remove_hard()
 {
-	ssize_t i, j;
+	size_t i, j;
 	
 	for (i = 0; i < count; i++) {
 		hashset_remove(&set, &vals[i]);
