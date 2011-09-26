@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 
-
 struct hashset {
 	size_t width;
 	size_t (*hash) (const void *);
@@ -21,8 +20,6 @@ struct hashset_pos {
 	size_t hash;
 	size_t insert;
 	size_t existing;
-	bool has_existing;
-	bool has_insert;
 };
 
 struct hashset_iter {
@@ -30,9 +27,11 @@ struct hashset_iter {
 	size_t i;
 	void *val;
 };
+
 #define HASHSET_KEY(it) ((it).val)
 #define HASHSET_FOREACH(it, set) \
 	for ((it) = hashset_iter_make(set); hashset_iter_advance(&(it));)
+
 
 /* create, destroy */
 void hashset_init(struct hashset *s, size_t width,

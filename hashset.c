@@ -324,28 +324,24 @@ void *hashset_find(const struct hashset *s, const void *key,
 	bool full, deleted;
 
 	pos->hash = hash;
-	pos->has_insert = false;
-	pos->has_existing = false;
+	pos->insert = HT_MAX_BUCKETS;
+	pos->existing = HT_MAX_BUCKETS;
 
 	for (num_probes = 0; num_probes < bucket_count; num_probes++) {
 		ptr = (char *)buckets + bucknum * width;
 		full = status[bucknum] & HT_BUCKET_FULL;
 		deleted = status[bucknum] & HT_BUCKET_DELETED;
 		if (!full && !deleted) {	// bucket is empty
-			if (!pos->has_insert) {	// found no prior place to insert
+			if (pos->insert == HT_MAX_BUCKETS) {	// found no prior place to insert
 				pos->insert = bucknum;
-				pos->has_insert = true;
 			}
-			pos->has_existing = false;
 			return NULL;
 		} else if (!full && deleted) {	// keep searching, but mark to insert
-			if (!pos->has_insert) {
+			if (pos->insert == HT_MAX_BUCKETS) {
 				pos->insert = bucknum;
-				pos->has_insert = true;
 			}
 		} else if (!hashset_compare(s, key, ptr)) {
 			pos->existing = bucknum;
-			pos->has_existing = true;
 			return ptr;
 		}
 		bucknum =
@@ -361,7 +357,7 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 {
 	assert(s);
 	assert(pos);
-	assert(!pos->has_existing);
+	assert(pos->existing == HT_MAX_BUCKETS);
 	assert(key);
 	assert(hashset_hash(s, key) == pos->hash);
 
@@ -372,7 +368,7 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 
 	assert(!hashset_needs_grow_delta(s, 1));
 	assert(s->count < s->count_max);	
-	assert(pos->has_insert);
+	assert(pos->insert != HT_MAX_BUCKETS);
 
 	size_t ix = pos->insert;
 	size_t width = s->width;
@@ -392,7 +388,7 @@ void hashset_remove_at(struct hashset *s, struct hashset_pos *pos)
 {
 	assert(s);
 	assert(pos);
-	assert(pos->has_existing);
+	assert(pos->existing != HT_MAX_BUCKETS);
 
 	size_t ix = pos->existing;
 	size_t width = s->width;
