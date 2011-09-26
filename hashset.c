@@ -1,9 +1,8 @@
 #include <assert.h>    // assert
 #include <limits.h>    // CHAR_BIT
-#include <stdbool.h>   // bool
 #include <stddef.h>    // size_t, NULL
 #include <stdlib.h>    // free
-#include <string.h>    // memset, memmove, memcpy
+#include <string.h>    // memset, memcpy
 #include "xalloc.h"    // xrealloc
 
 #include "hashset.h"
@@ -121,7 +120,7 @@ static void hashset_init_copy_sized(struct hashset *s,
 	}
 }
 
-static bool hashset_needs_grow_delta(const struct hashset *s, size_t delta)
+static int hashset_needs_grow_delta(const struct hashset *s, size_t delta)
 {
 	assert(delta <= HT_MAX_COUNT);
 	assert(s->nbucket <= HT_MAX_COUNT - delta);
@@ -129,9 +128,9 @@ static bool hashset_needs_grow_delta(const struct hashset *s, size_t delta)
 	
 	if (s->nbucket >= HT_MIN_BUCKETS
 	    && delta <= s->count_max - s->count) {
-		return false;
+		return 0;
 	} else {
-		return true;
+		return 1;
 	}
 }
 
@@ -244,12 +243,16 @@ void hashset_clear(struct hashset *s)
 	s->count = 0;
 }
 
-bool hashset_contains(const struct hashset *s, const void *key)
+int hashset_contains(const struct hashset *s, const void *key)
 {
 	assert(s);
 	assert(key);
 
-	return hashset_item(s, key);
+	if (hashset_item(s, key)) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 /* MISSING copy_to */
@@ -270,19 +273,18 @@ bool hashset_contains(const struct hashset *s, const void *key)
 /* INVALID on_deserialization */
 /* MISSING overlaps */
 
-bool hashset_remove(struct hashset *s, const void *key)
+int hashset_remove(struct hashset *s, const void *key)
 {
 	assert(s);
 	assert(key);
 
-	bool found;
-
 	struct hashset_pos pos;
-	if ((found = hashset_find(s, key, &pos))) {
+	if (hashset_find(s, key, &pos)) {
 		hashset_remove_at(s, &pos);
+		return 1;
+	} else {
+		return 0;
 	}
-	assert(!hashset_contains(s, key));
-	return found;
 }
 
 /* MISSING remove_where */
@@ -321,7 +323,7 @@ void *hashset_find(const struct hashset *s, const void *key,
 	size_t hash = hashset_hash(s, key);
 	size_t bucknum = hash & bucket_count_minus_one;
 	void *ptr;
-	bool full, deleted;
+	unsigned char full, deleted;
 
 	pos->hash = hash;
 	pos->insert = HT_MAX_BUCKETS;

@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <setjmp.h>

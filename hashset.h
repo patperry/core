@@ -54,8 +54,8 @@ void *hashset_set_item(struct hashset *s, const void *key);
 /* methods */
 void *hashset_add(struct hashset *s, const void *key);
 void hashset_clear(struct hashset *s);
-bool hashset_contains(const struct hashset *s, const void *key);
-bool hashset_remove(struct hashset *s, const void *key);
+int hashset_contains(const struct hashset *s, const void *key);
+int hashset_remove(struct hashset *s, const void *key);
 void hashset_trim_excess(struct hashset *s);
 
 /* position-based operations */
