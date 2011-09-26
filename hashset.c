@@ -36,7 +36,6 @@
  * power of 2 that a size_t can hold.
  */
 #define HT_MAX_BUCKETS	((size_t)1 << (CHAR_BIT * sizeof(size_t) - 1))
-#define HT_MAX_COUNT	(HT_OCCUPANCY_PCT * (HT_MAX_BUCKETS / 100))
 
 /* The following is more accurate than ((pct)/100.0 * (x)) when x is
  * really big (> 2^52).
@@ -44,6 +43,9 @@
 #define PERCENT(pct,x) \
 	((pct) * ((x) / 100) \
 	 + (size_t)((pct) * (((x) % 100) / 100.0)))
+
+#define HT_MAX_COUNT	PERCENT(HT_OCCUPANCY_PCT, HT_MAX_BUCKETS)
+
 
 /* This is the smallest size a hashtable can be without being too crowded
  * If you like, you can give a min #buckets as well as a min #elts */
