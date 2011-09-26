@@ -27,9 +27,10 @@ struct hashset_pos {
 
 struct hashset_iter {
 	const struct hashset *s;
-	ssize_t i;
+	size_t i;
+	void *val;
 };
-#define HASHSET_KEY(it) ((it).s->array + (it).i * (it).s->elt_size)
+#define HASHSET_KEY(it) ((it).val)
 #define HASHSET_FOREACH(it, set) \
 	for ((it) = hashset_iter_make(set); hashset_iter_advance(&(it));)
 
@@ -68,7 +69,7 @@ void hashset_remove_at(struct hashset *s, struct hashset_pos *pos);
 /* iteration */
 struct hashset_iter hashset_iter_make(const struct hashset *s);
 void hashset_iter_reset(struct hashset_iter *it);
-bool hashset_iter_advance(struct hashset_iter *it);
+void *hashset_iter_advance(struct hashset_iter *it);
 
 /* static method definitions */
 ssize_t hashset_count(const struct hashset *s)

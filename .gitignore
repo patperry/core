@@ -1,0 +1,14 @@
+*.a
+*.o
+.deps
+/Makefile
+/Makefile.in
+/aclocal.m4
+/autom4te.cache
+/build-aux
+/config.h
+/config.in
+/config.status
+/configure
+/hashset-test
+/stamp-h1

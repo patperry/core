@@ -31,7 +31,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif // _WIN32
-#include <cmockery.h>
+#include "cmockery.h"
 
 #ifdef _WIN32
 #define vsnprintf _vsnprintf

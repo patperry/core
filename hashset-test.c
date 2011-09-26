@@ -1,9 +1,12 @@
 #include <assert.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <setjmp.h>
-#include <cmockery.h>
+#include "cmockery.h"
 
 #include "hashset.h"
 
@@ -25,8 +28,8 @@ static uint32_t int_bad_hash(const void *x)
 }
 
 static struct hashset set;
-static hash_fn hash;
-static equals_fn equals;
+static uint32_t (*hash) (const void *);
+static bool (*equals) (const void *, const void *);
 static int *vals;
 static ssize_t count;
 

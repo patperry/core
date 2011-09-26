@@ -389,7 +389,7 @@ struct hashset_iter hashset_iter_make(const struct hashset *s)
 
 	struct hashset_iter it;
 	it.s = s;
-	it.i = -1;
+	hashset_iter_reset(&it);
 	return it;
 }
 
@@ -397,25 +397,26 @@ void hashset_iter_reset(struct hashset_iter *it)
 {
 	assert(it);
 
-	it->i = -1;
+	it->i = 0;
+	it->val = NULL;
 }
 
-bool hashset_iter_advance(struct hashset_iter *it)
+void *hashset_iter_advance(struct hashset_iter *it)
 {
 	assert(it);
 
+	const struct hashset *s = it->s;
 	const uint8_t *status = it->s->status;
-	ssize_t i, n = hashset_bucket_count(it->s);
-	bool has_full = false;
+	ssize_t i, n = hashset_bucket_count(s);
 	
-	
-	for (i = it->i + 1; i < n; i++) {
+	for (i = it->i; i < n; i++) {
 		if (status[i] & HASHSET_BIN_FULL) {
-			has_full = true;
-			break;
+			it->val = s->array + i * s->elt_size;
+			goto out;
 		}
 	}
-	
-	it->i = i;
-	return has_full;
+	it->val = NULL;
+out:
+	it->i = i + 1;
+	return it->val;
 }
