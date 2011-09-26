@@ -73,7 +73,7 @@ static size_t min_buckets(size_t count, size_t nbucket0)
 /* Reset the enlarge threshold */
 static void hashset_reset_thresholds(struct hashset *s, size_t nbucket)
 {
-	s->enlarge_threshold = PERCENT(HT_OCCUPANCY_PCT, nbucket);
+	s->count_max = PERCENT(HT_OCCUPANCY_PCT, nbucket);
 }
 
 static size_t hashset_bucket_count(const struct hashset *s)
@@ -125,10 +125,10 @@ static bool hashset_needs_grow_delta(const struct hashset *s, size_t delta)
 {
 	assert(delta <= HT_MAX_COUNT);
 	assert(s->nbucket <= HT_MAX_COUNT - delta);
-	assert(s->enlarge_threshold >= s->count);
+	assert(s->count_max >= s->count);
 	
 	if (s->nbucket >= HT_MIN_BUCKETS
-	    && delta <= s->enlarge_threshold - s->count) {
+	    && delta <= s->count_max - s->count) {
 		return false;
 	} else {
 		return true;
@@ -370,7 +370,8 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 		hashset_find(s, key, pos);	// need to recompute pos
 	}
 
-	assert(!hashset_needs_grow_delta(s, 1));	
+	assert(!hashset_needs_grow_delta(s, 1));
+	assert(s->count < s->count_max);	
 	assert(pos->has_insert);
 
 	size_t ix = pos->insert;
@@ -383,8 +384,6 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 	if (key) {
 		memcpy(ptr, key, width);
 	}
-	
-	assert(s->count <= s->enlarge_threshold);
 	
 	return ptr;
 }

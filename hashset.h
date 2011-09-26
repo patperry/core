@@ -14,7 +14,7 @@ struct hashset {
 	unsigned char *status;
 
 	size_t count;
-	size_t enlarge_threshold;	// (table size) * enlarge_factor
+	size_t count_max;
 };
 
 struct hashset_pos {
