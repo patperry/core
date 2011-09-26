@@ -84,7 +84,7 @@ static void hashset_init_sized(struct hashset *s,
 	assert(compar);
 	assert(num_buckets >= HT_MIN_BUCKETS);
 
-	s->array = xcalloc(num_buckets, width);
+	s->buckets = xcalloc(num_buckets, width);
 	s->num_buckets = num_buckets;
 	s->width = width;
 	s->status = xcalloc(num_buckets, sizeof(s->status[0]));
@@ -176,7 +176,7 @@ void hashset_deinit(struct hashset *s)
 	assert(s);
 
 	free(s->status);
-	free(s->array);
+	free(s->buckets);
 }
 
 void *hashset_item(const struct hashset *s, const void *key)
@@ -222,7 +222,7 @@ void hashset_clear(struct hashset *s)
 
 	ssize_t n = hashset_bucket_count(s);
 	
-	memset(s->array, 0, n * s->width);
+	memset(s->buckets, 0, n * s->width);
 	memset(s->status, 0, n * sizeof(s->status[0]));
 	s->count = 0;
 }
@@ -295,7 +295,7 @@ void *hashset_find(const struct hashset *s, const void *key,
 	assert(key);
 	assert(pos);
 
-	const void *array = s->array;
+	const void *buckets = s->buckets;
 	const uint8_t *status = s->status;
 	const ssize_t bucket_count = s->num_buckets;
 	const size_t width = s->width;
@@ -311,7 +311,7 @@ void *hashset_find(const struct hashset *s, const void *key,
 	pos->has_existing = false;
 
 	for (num_probes = 0; num_probes < bucket_count; num_probes++) {
-		ptr = (char *)array + bucknum * width;
+		ptr = (char *)buckets + bucknum * width;
 		full = status[bucknum] & HASHSET_BIN_FULL;
 		deleted = status[bucknum] & HASHSET_BIN_DELETED;
 		if (!full && !deleted) {	// bucket is empty
@@ -361,7 +361,7 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 	s->count++;
 	s->status[ix] |= HASHSET_BIN_FULL;
 	
-	void *ptr = s->array + ix * width;
+	void *ptr = s->buckets + ix * width;
 	if (key) {
 		memcpy(ptr, key, width);
 	}
@@ -378,7 +378,7 @@ void hashset_remove_at(struct hashset *s, struct hashset_pos *pos)
 	ssize_t ix = pos->existing;
 	size_t width = s->width;
 	s->count--;
-	memset(s->array + ix * width, 0, width);
+	memset(s->buckets + ix * width, 0, width);
 	s->status[ix] = HASHSET_BIN_DELETED;
 }
 
@@ -410,7 +410,7 @@ void *hashset_iter_advance(struct hashset_iter *it)
 	
 	for (i = it->i; i < n; i++) {
 		if (status[i] & HASHSET_BIN_FULL) {
-			it->val = s->array + i * s->width;
+			it->val = s->buckets + i * s->width;
 			goto out;
 		}
 	}

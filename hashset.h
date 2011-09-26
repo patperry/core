@@ -7,13 +7,15 @@
 #define  HASHSET_BIN_DELETED 2
 
 struct hashset {
-	void *array;
-	ssize_t num_buckets;
 	size_t width;
-	uint8_t *status;
-	ssize_t count;
 	size_t (*hash) (const void *);
 	int (*compar) (const void *, const void *);
+
+	void *buckets;
+	
+	ssize_t num_buckets;
+	uint8_t *status;
+	ssize_t count;
 	ssize_t enlarge_threshold;	// (table size) * enlarge_factor
 };
 
