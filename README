@@ -17,7 +17,7 @@ The implementation of "shashset" is currently incomplete.
 
 To build the project and run the tests from the source repository, run
 
-    autoreconf
+    autoreconf --install
     ./configure
     make
     make check
