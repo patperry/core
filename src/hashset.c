@@ -138,13 +138,13 @@ static void hashset_init_copy_sized(struct hashset *s,
 	assert(nbucket >= HT_MIN_BUCKETS);
 
 	struct hashset_iter it;
-	const void *key;
+	const void *val;
 
 	hashset_init_sized(s, src->width, src->hash, src->compar, nbucket);
 
 	HASHSET_FOREACH(it, src) {
-		key = HASHSET_KEY(it);
-		hashset_add(s, key);
+		val = HASHSET_VAL(it);
+		hashset_add(s, val);
 	}
 }
 
@@ -286,16 +286,16 @@ void *hashset_set_item(struct hashset *s, const void *key)
 	}
 }
 
-void *hashset_add(struct hashset *s, const void *key)
+void *hashset_add(struct hashset *s, const void *val)
 {
 	assert(s);
-	assert(key);
+	assert(val);
 
 	struct hashset_pos pos;
-	if (hashset_find(s, key, &pos)) {
+	if (hashset_find(s, val, &pos)) {
 		return NULL;
 	} else {
-		return hashset_insert(s, &pos, key);
+		return hashset_insert(s, &pos, val);
 	}
 }
 
@@ -441,16 +441,16 @@ void *hashset_find(const struct hashset *s, const void *key,
 }
 
 void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
-		     const void *key)
+		     const void *val)
 {
 	assert(s);
 	assert(pos);
 	assert(pos->existing == HT_MAX_BUCKETS);
-	assert(key);
+	assert(val);
 
 	if (hashset_needs_grow_delta(s, 1)) {
 		hashset_grow_delta(s, 1);
-		hashset_find(s, key, pos);	// need to recompute pos
+		hashset_find(s, val, pos);	// need to recompute pos
 	}
 
 	assert(!hashset_needs_grow_delta(s, 1));
@@ -465,7 +465,7 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 	s->status[ix] |= HT_BUCKET_FULL;
 
 	void *ptr = s->buckets + ix * width;
-	memcpy(ptr, key, width);
+	memcpy(ptr, val, width);
 
 	return ptr;
 }

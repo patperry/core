@@ -58,7 +58,7 @@ struct hashset_iter {
 	void *val;
 };
 
-#define HASHSET_KEY(it) ((it).val)
+#define HASHSET_VAL(it) ((it).val)
 #define HASHSET_FOREACH(it, set) \
 	for ((it) = hashset_iter_make(set); hashset_iter_advance(&(it));)
 
@@ -81,10 +81,10 @@ static inline size_t hashset_capacity(const struct hashset *s);
 void hashset_ensure_capacity(struct hashset *s, size_t n);
 
 void *hashset_item(const struct hashset *s, const void *key);
-void *hashset_set_item(struct hashset *s, const void *key);
+void *hashset_set_item(struct hashset *s, const void *val);
 
 /* methods */
-void *hashset_add(struct hashset *s, const void *key);
+void *hashset_add(struct hashset *s, const void *val);
 void hashset_clear(struct hashset *s);
 int hashset_contains(const struct hashset *s, const void *key);
 int hashset_remove(struct hashset *s, const void *key);
@@ -94,7 +94,7 @@ void hashset_trim_excess(struct hashset *s);
 void *hashset_find(const struct hashset *s, const void *key,
 		   struct hashset_pos *pos);
 void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
-		     const void *key);
+		     const void *val);
 void hashset_remove_at(struct hashset *s, struct hashset_pos *pos);
 
 /* iteration */
