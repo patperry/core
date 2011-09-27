@@ -43,9 +43,9 @@ static void time_map_grow(int iters)
 	struct rusage start, finish;
 	struct pair pair;
 
+	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
 	getrusage(RUSAGE_SELF, &start);
 	
-	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
 	for (pair.key = 0; pair.key < iters; pair.key++) {
 		pair.val = pair.key + 1;	
 		hashset_set_item(&set, &pair);
@@ -57,22 +57,27 @@ static void time_map_grow(int iters)
 	hashset_deinit(&set);
 }
 
-/*
-static void time_map_grow_predicted(int iters) {
-  MapType set;
-  Rusage t;
+static void time_map_grow_predicted(int iters)
+{
+	struct hashset set;
+	struct rusage start, finish;
+	struct pair pair;
 
-  const size_t start = CurrentMemoryUsage();
-  set.resize(iters);
-  t.Reset();
-  for (int i = 0; i < iters; i++) {
-    set[i] = i+1;
-  }
-  double ut = t.UserTime();
-  const size_t finish = CurrentMemoryUsage();
-  report("map_predict/grow", ut, iters, start, finish);
+
+	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
+	hashset_ensure_capacity(&set, iters);
+	getrusage(RUSAGE_SELF, &start);
+	
+	for (pair.key = 0; pair.key < iters; pair.key++) {
+		pair.val = pair.key + 1;	
+		hashset_set_item(&set, &pair);
+	} 
+
+	getrusage(RUSAGE_SELF, &finish);
+
+  	report("map_predict/grow", iters, &start, &finish);
+	hashset_deinit(&set);
 }
-*/
 
 static void time_map_replace(int iters)
 {
@@ -252,6 +257,7 @@ int main(int argc, char** argv)
 	}
 
 	time_map_grow(iters);
+	time_map_grow_predicted(iters);
 	time_map_replace(iters);
 	time_map_fetch_random(iters);
 	time_map_fetch_sequential(iters);

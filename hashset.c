@@ -143,10 +143,25 @@ static void hashset_grow_delta(struct hashset *s, size_t delta)
 	size_t count = count0 + delta;
 	size_t nbucket = min_buckets(count, nbucket0);
 
-	struct hashset copy;
-	hashset_init_copy_sized(&copy, s, nbucket);
-	hashset_deinit(s);
-	*s = copy;
+	if (nbucket > nbucket0) {
+		struct hashset copy;
+		hashset_init_copy_sized(&copy, s, nbucket);
+		hashset_deinit(s);
+		*s = copy;
+	}
+}
+
+void hashset_ensure_capacity(struct hashset *s, size_t n)
+{
+	assert(s);
+	assert(n >= hashset_count(s));
+	assert(hashset_capacity(s) >= hashset_count(s));
+	assert(n <= HT_MAX_BUCKETS);
+
+	if (n > hashset_capacity(s)) {
+		size_t delta = n - hashset_count(s);
+		hashset_grow_delta(s, delta);
+	}
 }
 
 void hashset_init(struct hashset *s,

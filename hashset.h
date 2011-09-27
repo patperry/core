@@ -48,6 +48,9 @@ static inline int hashset_compare(const struct hashset *s, const void *key1,
 				  const void *key2);
 static inline size_t hashset_hash(const struct hashset *s, const void *key);
 
+static inline size_t hashset_capacity(const struct hashset *s);
+void hashset_ensure_capacity(struct hashset *s, size_t n);
+
 void *hashset_item(const struct hashset *s, const void *key);
 void *hashset_set_item(struct hashset *s, const void *key);
 
@@ -74,6 +77,11 @@ void *hashset_iter_advance(struct hashset_iter *it);
 size_t hashset_count(const struct hashset *s)
 {
 	return s->count;
+}
+
+static inline size_t hashset_capacity(const struct hashset *s)
+{
+	return s->count_max;
 }
 
 size_t hashset_width(const struct hashset *s)
