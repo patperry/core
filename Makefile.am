@@ -24,11 +24,16 @@ libcmockery_a_SOURCES = \
 		cmockery.h
 
 check_PROGRAMS = \
-		hashset-test
+		hashset-test \
+		benchmark
 
 hashset_test_LDADD = \
 		libhashset.a \
 		libcmockery.a \
+		$(LIBS)
+
+benchmark_LDADD = \
+		libhashset.a \
 		$(LIBS)
 
 TESTS = $(check_PROGRAMS)

@@ -5,6 +5,7 @@
 /Makefile.in
 /aclocal.m4
 /autom4te.cache
+/benchmark
 /build-aux
 /config.h
 /config.in
