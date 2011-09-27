@@ -17,7 +17,6 @@ struct hashset {
 };
 
 struct hashset_pos {
-	size_t hash;
 	size_t insert;
 	size_t existing;
 };

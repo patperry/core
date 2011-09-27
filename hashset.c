@@ -386,7 +386,6 @@ void *hashset_find(const struct hashset *s, const void *key,
 	void *ptr;
 	unsigned char stat;
 
-	pos->hash = hash;
 	pos->insert = HT_MAX_BUCKETS;
 	pos->existing = HT_MAX_BUCKETS;
 
@@ -421,7 +420,6 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 	assert(pos);
 	assert(pos->existing == HT_MAX_BUCKETS);
 	assert(key);
-	assert(hashset_hash(s, key) == pos->hash);
 
 	if (hashset_needs_grow_delta(s, 1)) {
 		hashset_grow_delta(s, 1);
