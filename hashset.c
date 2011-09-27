@@ -318,13 +318,34 @@ int hashset_remove(struct hashset *s, const void *key)
 	assert(s);
 	assert(key);
 
-	struct hashset_pos pos;
-	if (hashset_find(s, key, &pos)) {
-		hashset_remove_at(s, &pos);
-		return 1;
-	} else {
-		return 0;
+	const void *buckets = s->buckets;
+	unsigned char *status = s->status;
+	const size_t bucket_count = s->nbucket;
+	const size_t width = s->width;
+	size_t num_probes = 0;	// how many times we've probed
+	const size_t bucket_count_minus_one = bucket_count - 1;
+	size_t hash = hashset_hash(s, key);
+	size_t bucknum = hash & bucket_count_minus_one;
+	void *ptr;
+	unsigned char stat;
+
+	for (num_probes = 0; num_probes < bucket_count; num_probes++) {
+		ptr = (char *)buckets + bucknum * width;
+		stat = status[bucknum];
+		if (!stat) {	// bucket is empty
+			return 0;
+		} else if (stat == HT_BUCKET_DELETED) {	// empty, deleted; keep searching
+		} else if (!hashset_compare(s, key, ptr)) {
+			status[bucknum] = HT_BUCKET_DELETED;
+			s->count--;
+			return 1;
+		}
+		bucknum =
+		    (bucknum +
+		     JUMP_(key, num_probes + 1)) & bucket_count_minus_one;
 	}
+
+	return 0;
 }
 
 /* MISSING remove_where */
