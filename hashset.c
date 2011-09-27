@@ -375,13 +375,12 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 	size_t ix = pos->insert;
 	size_t width = s->width;
 	
+	pos->existing = ix;
 	s->count++;
 	s->status[ix] |= HT_BUCKET_FULL;
 	
 	void *ptr = s->buckets + ix * width;
-	if (key) {
-		memcpy(ptr, key, width);
-	}
+	memcpy(ptr, key, width);
 	
 	return ptr;
 }
@@ -394,8 +393,11 @@ void hashset_remove_at(struct hashset *s, struct hashset_pos *pos)
 
 	size_t ix = pos->existing;
 	size_t width = s->width;
+
+	pos->insert = ix;
+	pos->existing = HT_MAX_BUCKETS;
+
 	s->count--;
-	memset(s->buckets + ix * width, 0, width);
 	s->status[ix] = HT_BUCKET_DELETED;
 }
 
