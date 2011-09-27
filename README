@@ -5,17 +5,24 @@ but the functionality is equivalent.  In many cases the names of the functions
 are based on the names for the equivalent C# HashSet<T> functions.  The
 implementation for "hashset" is based on the implementation of Google's
 dense_hashset, while the implementation of "shashset" is based on
-Google's sparse_hashset.
+Google's sparse_hashset.  See tests/benchmark.c and tests/test-hashset.c for
+sample usage.
 
 Performance for our hashset is comparable to the performance of Google's
-dense_hashset, at least on some simple benchmarks.  Notably, our
+dense_hashmap, at least on some simple benchmarks.  Notably, our
 "fetch", and "remove" are slightly faster, while our "insert" and "replace"
 are slightly slower.
 
 The implementation of "shashset" is currently incomplete.
 
-The easy way to use this file in your project is to copy the following files
-into your project: hashset.{c,h}, xalloc.{c,h}, xalloc-die.c.  The "xalloc"
-files can easily be replaced by your own versions of these functions.  See
-tests/benchmark.c and tests/test-hashset.c for sample usage.
+To build the project and run the tests from the source repository, run
+
+    autoreconf
+    ./configure
+    make
+    make check
+
+The recommended way to use this file in your project is to copy the following
+files into your project: hashset.{c,h}, xalloc.{c,h}, and xalloc-die.c.  The
+"xalloc" files can easily be replaced by your own versions of these files.
 
