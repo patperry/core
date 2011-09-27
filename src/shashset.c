@@ -29,14 +29,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>    // assert
-#include <stdbool.h>   // bool
-#include <stddef.h>    // size_t, NULL
-#include <stdint.h>    // uint8_t, uint16_t
-#include <stdlib.h>    // free
-#include <string.h>    // memset, memmove, memcpy
-#include <sys/types.h> // ssize_t
-#include "xalloc.h"    // xrealloc
+#include <assert.h>		// assert
+#include <stdbool.h>		// bool
+#include <stddef.h>		// size_t, NULL
+#include <stdint.h>		// uint8_t, uint16_t
+#include <stdlib.h>		// free
+#include <string.h>		// memset, memmove, memcpy
+#include <sys/types.h>		// ssize_t
+#include "xalloc.h"		// xrealloc
 
 #include "sparsegroup.h"
 #include "sparsetable.h"
@@ -103,7 +103,8 @@ static ssize_t shashset_bucket_count(const struct shashset *s)
 	return sparsetable_size(&s->table);
 }
 
-static void shashset_init_sized(struct shashset *s, uint32_t (*hash) (const void *),
+static void shashset_init_sized(struct shashset *s,
+				uint32_t (*hash) (const void *),
 				bool (*equals) (const void *, const void *),
 				ssize_t num_buckets, size_t elt_size)
 {
@@ -119,8 +120,8 @@ static void shashset_init_sized(struct shashset *s, uint32_t (*hash) (const void
 }
 
 static void shashset_init_copy_sized(struct shashset *s,
-				    const struct shashset *src,
-				    ssize_t num_buckets)
+				     const struct shashset *src,
+				     ssize_t num_buckets)
 {
 	assert(s);
 	assert(src);
@@ -131,7 +132,7 @@ static void shashset_init_copy_sized(struct shashset *s,
 	const void *key;
 
 	shashset_init_sized(s, src->hash, src->equals, num_buckets,
-			   shashset_elt_size(src));
+			    shashset_elt_size(src));
 
 	SHASHSET_FOREACH(it, src) {
 		key = SHASHSET_KEY(it);
@@ -167,8 +168,7 @@ static void shashset_grow_delta(struct shashset *s, ssize_t delta)
 }
 
 void shashset_init(struct shashset *s, uint32_t (*hash) (const void *),
-		   bool (*equals) (const void *, const void *),
-		   size_t elt_size)
+		   bool (*equals) (const void *, const void *), size_t elt_size)
 {
 	assert(s);
 	assert(hash);
@@ -315,7 +315,7 @@ void shashset_trim_excess(struct shashset *s)
 /* MISSING union_with */
 
 void *shashset_find(const struct shashset *s, const void *key,
-		   struct shashset_pos *pos)
+		    struct shashset_pos *pos)
 {
 	assert(s);
 	assert(key);
@@ -364,7 +364,7 @@ void *shashset_find(const struct shashset *s, const void *key,
 }
 
 void *shashset_insert(struct shashset *s, struct shashset_pos *pos,
-		     const void *key)
+		      const void *key)
 {
 	assert(s);
 	assert(pos);

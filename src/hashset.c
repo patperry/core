@@ -29,18 +29,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>    // assert
-#include <limits.h>    // CHAR_BIT
-#include <stddef.h>    // size_t, NULL
-#include <stdlib.h>    // free
-#include <string.h>    // memset, memcpy
-#include "xalloc.h"    // xrealloc
+#include <assert.h>		// assert
+#include <limits.h>		// CHAR_BIT
+#include <stddef.h>		// size_t, NULL
+#include <stdlib.h>		// free
+#include <string.h>		// memset, memcpy
+#include "xalloc.h"		// xrealloc
 
 #include "hashset.h"
 
 #define  HT_BUCKET_FULL    1
 #define  HT_BUCKET_DELETED 2
-
 
 /* The probing method */
 /* #define JUMP_(key, num_probes) (1)          // Linear probing */
@@ -79,7 +78,6 @@
 
 #define HT_MAX_COUNT	PERCENT(HT_OCCUPANCY_PCT, HT_MAX_BUCKETS)
 
-
 /* This is the smallest size a hashtable can be without being too crowded
  * If you like, you can give a min #buckets as well as a min #elts */
 static size_t min_buckets(size_t count, size_t nbucket0)
@@ -88,7 +86,7 @@ static size_t min_buckets(size_t count, size_t nbucket0)
 	assert(nbucket0 <= HT_MAX_BUCKETS);
 
 	size_t n = HT_MIN_BUCKETS;	// min buckets allowed
-	
+
 	while (n < nbucket0 || count > PERCENT(HT_OCCUPANCY_PCT, n)) {
 		assert(2 * n > n);
 		n *= 2;
@@ -96,7 +94,7 @@ static size_t min_buckets(size_t count, size_t nbucket0)
 
 	assert(n >= nbucket0);
 	assert(count <= PERCENT(HT_OCCUPANCY_PCT, n));
-	
+
 	return n;
 }
 
@@ -113,8 +111,8 @@ static size_t hashset_bucket_count(const struct hashset *s)
 
 static void hashset_init_sized(struct hashset *s,
 			       size_t width,
-			       size_t (*hash)(const void *),
-			       int (*compar)(const void *, const void *),
+			       size_t (*hash) (const void *),
+			       int (*compar) (const void *, const void *),
 			       size_t nbucket)
 {
 	assert(s);
@@ -132,8 +130,7 @@ static void hashset_init_sized(struct hashset *s,
 }
 
 static void hashset_init_copy_sized(struct hashset *s,
-				    const struct hashset *src,
-				    size_t nbucket)
+				    const struct hashset *src, size_t nbucket)
 {
 	assert(s);
 	assert(src);
@@ -156,9 +153,8 @@ static int hashset_needs_grow_delta(const struct hashset *s, size_t delta)
 	assert(delta <= HT_MAX_COUNT);
 	assert(s->nbucket <= HT_MAX_COUNT - delta);
 	assert(s->count_max >= s->count);
-	
-	if (s->nbucket >= HT_MIN_BUCKETS
-	    && delta <= s->count_max - s->count) {
+
+	if (s->nbucket >= HT_MIN_BUCKETS && delta <= s->count_max - s->count) {
 		return 0;
 	} else {
 		return 1;
@@ -197,13 +193,13 @@ void hashset_ensure_capacity(struct hashset *s, size_t n)
 
 void hashset_init(struct hashset *s,
 		  size_t width,
-		  size_t (*hash)(const void *),
-		  int (*compar)(const void *, const void *))
+		  size_t (*hash) (const void *),
+		  int (*compar) (const void *, const void *))
 {
 	assert(s);
 	assert(hash);
 	assert(compar);
-	
+
 	s->buckets = NULL;
 	s->nbucket = 0;
 	s->width = width;
@@ -260,7 +256,7 @@ void *hashset_item(const struct hashset *s, const void *key)
 	for (num_probes = 0; num_probes < bucket_count; num_probes++) {
 		ptr = (char *)buckets + bucknum * width;
 		stat = status[bucknum];
-		if (!stat) { // bucket is empty
+		if (!stat) {	// bucket is empty
 			return NULL;
 		} else if (stat == HT_BUCKET_DELETED) {	// bucket empty, deleted; keep searching
 
@@ -272,7 +268,7 @@ void *hashset_item(const struct hashset *s, const void *key)
 		     JUMP_(key, num_probes + 1)) & bucket_count_minus_one;
 	}
 
-	return NULL;		
+	return NULL;
 }
 
 void *hashset_set_item(struct hashset *s, const void *key)
@@ -308,7 +304,7 @@ void hashset_clear(struct hashset *s)
 	assert(s);
 
 	size_t n = hashset_bucket_count(s);
-	
+
 	memset(s->buckets, 0, n * s->width);
 	memset(s->status, 0, n * sizeof(s->status[0]));
 	s->count = 0;
@@ -458,19 +454,19 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 	}
 
 	assert(!hashset_needs_grow_delta(s, 1));
-	assert(s->count < s->count_max);	
+	assert(s->count < s->count_max);
 	assert(pos->insert != HT_MAX_BUCKETS);
 
 	size_t ix = pos->insert;
 	size_t width = s->width;
-	
+
 	pos->existing = ix;
 	s->count++;
 	s->status[ix] |= HT_BUCKET_FULL;
-	
+
 	void *ptr = s->buckets + ix * width;
 	memcpy(ptr, key, width);
-	
+
 	return ptr;
 }
 
@@ -514,7 +510,7 @@ void *hashset_iter_advance(struct hashset_iter *it)
 	const struct hashset *s = it->s;
 	const unsigned char *status = it->s->status;
 	size_t i, n = hashset_bucket_count(s);
-	
+
 	for (i = it->i; i < n; i++) {
 		if (status[i] & HT_BUCKET_FULL) {
 			it->val = s->buckets + i * s->width;

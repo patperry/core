@@ -29,18 +29,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>    // assert
-#include <stdbool.h>   // bool
-#include <stddef.h>    // size_t, NULL
-#include <stdint.h>    // uint8_t, uint16_t
-#include <stdlib.h>    // free
-#include <string.h>    // memset, memmove, memcpy
-#include <sys/types.h> // ssize_t
-#include "xalloc.h"    // xrealloc
+#include <assert.h>		// assert
+#include <stdbool.h>		// bool
+#include <stddef.h>		// size_t, NULL
+#include <stdint.h>		// uint8_t, uint16_t
+#include <stdlib.h>		// free
+#include <string.h>		// memset, memmove, memcpy
+#include <sys/types.h>		// ssize_t
+#include "xalloc.h"		// xrealloc
 
 #include "sparsegroup.h"
 #include "sparsetable.h"
-
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -184,7 +183,7 @@ void sparsetable_set_size(struct sparsetable *t, ssize_t n)
 		}
 
 		t->groups = xrealloc(t->groups,
-			             num_groups * sizeof(t->groups[0]));
+				     num_groups * sizeof(t->groups[0]));
 		t->num_groups = num_groups;
 
 		n0 = t->table_size;
@@ -245,7 +244,7 @@ void sparsetable_remove_at(struct sparsetable *t,
 bool sparsetable_deleted(const struct sparsetable *t,
 			 const struct sparsetable_pos *pos)
 {
-	(void)t; // unused
+	(void)t;		// unused
 	return sparsegroup_deleted(pos->group, &pos->group_pos);
 }
 

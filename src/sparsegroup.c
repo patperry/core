@@ -29,14 +29,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>    // assert
-#include <stdbool.h>   // bool
-#include <stddef.h>    // size_t, NULL
-#include <stdint.h>    // uint8_t, uint16_t
-#include <stdlib.h>    // free
-#include <string.h>    // memset, memmove, memcpy
-#include <sys/types.h> // ssize_t
-#include "xalloc.h"    // xrealloc
+#include <assert.h>		// assert
+#include <stdbool.h>		// bool
+#include <stddef.h>		// size_t, NULL
+#include <stdint.h>		// uint8_t, uint16_t
+#include <stdlib.h>		// free
+#include <string.h>		// memset, memmove, memcpy
+#include <sys/types.h>		// ssize_t
+#include "xalloc.h"		// xrealloc
 #include "sparsegroup.h"
 
 static ssize_t charbit(ssize_t i)
@@ -147,7 +147,6 @@ done:
 	return index;
 }
 
-
 /* bitmap manipulation */
 int sparsegroup_bmtest(const struct sparsegroup *g, ssize_t i)
 {
@@ -188,7 +187,7 @@ void sparsegroup_realloc_group(struct sparsegroup *g, ssize_t n,
 
 void sparsegroup_free_group(struct sparsegroup *g, size_t elt_size)
 {
-	(void)elt_size; // unused
+	(void)elt_size;		// unused
 	free(g->group);
 	g->group = NULL;
 }
@@ -268,7 +267,7 @@ ssize_t sparsegroup_count(const struct sparsegroup *g)
 
 ssize_t sparsegroup_size(const struct sparsegroup *g)
 {
-	(void)g; // unused;
+	(void)g;		// unused;
 	return SPARSETABLE_GROUP_SIZE;
 }
 
@@ -337,7 +336,7 @@ bool sparsegroup_deleted(const struct sparsegroup *g,
 
 /* iteration */
 struct sparsegroup_iter sparsegroup_iter_make(const struct sparsegroup
-						     *g, size_t elt_size)
+					      *g, size_t elt_size)
 {
 	struct sparsegroup_iter it;
 	sparsegroup_iter_reset(g, &it, elt_size);
@@ -345,7 +344,7 @@ struct sparsegroup_iter sparsegroup_iter_make(const struct sparsegroup
 }
 
 void sparsegroup_iter_reset(const struct sparsegroup *g,
-				   struct sparsegroup_iter *it, size_t elt_size)
+			    struct sparsegroup_iter *it, size_t elt_size)
 {
 	it->val = (char *)g->group - elt_size;
 	it->pos.index = -1;
@@ -353,8 +352,7 @@ void sparsegroup_iter_reset(const struct sparsegroup *g,
 }
 
 bool sparsegroup_iter_advance(const struct sparsegroup *g,
-				     struct sparsegroup_iter *it,
-				     size_t elt_size)
+			      struct sparsegroup_iter *it, size_t elt_size)
 {
 	it->pos.offset++;
 	if (it->pos.offset < sparsegroup_count(g)) {
@@ -368,5 +366,3 @@ bool sparsegroup_iter_advance(const struct sparsegroup *g,
 		return false;
 	}
 }
-
-

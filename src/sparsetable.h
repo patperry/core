@@ -32,7 +32,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /* An intmap maps the integers 0..n-1 to values.  The implementation on
  * Google's "sparsetable".
  *
@@ -40,7 +39,6 @@
  */
 
 #include <stddef.h>		// sizeof, size_t
-
 
 /* public */
 struct sparsetable {

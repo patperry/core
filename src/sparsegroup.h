@@ -65,14 +65,13 @@ void sparsegroup_dclear(struct sparsegroup *g, ssize_t i);
 
 /* group alloc/free */
 void sparsegroup_realloc_group(struct sparsegroup *g, ssize_t n,
-				      size_t elt_size);
+			       size_t elt_size);
 void sparsegroup_free_group(struct sparsegroup *g, size_t elt_size);
 
 /* indexing */
-ssize_t sparsegroup_index_to_offset(const struct sparsegroup *g,
-					   ssize_t index);
+ssize_t sparsegroup_index_to_offset(const struct sparsegroup *g, ssize_t index);
 ssize_t sparsegroup_offset_to_index(const struct sparsegroup *g,
-					   ssize_t offset);
+				    ssize_t offset);
 
 /* public functions */
 
@@ -82,11 +81,9 @@ void sparsegroup_deinit(struct sparsegroup *g, size_t elt_size);
 
 /* assign, clear */
 void sparsegroup_assign_copy(struct sparsegroup *g,
-				    const struct sparsegroup *src,
-				    size_t elt_size);
+			     const struct sparsegroup *src, size_t elt_size);
 void sparsegroup_clear(struct sparsegroup *g, size_t elt_size);
-void sparsegroup_clear_tail(struct sparsegroup *g, ssize_t i,
-				   size_t elt_size);
+void sparsegroup_clear_tail(struct sparsegroup *g, ssize_t i, size_t elt_size);
 
 /* informative */
 ssize_t sparsegroup_count(const struct sparsegroup *g);
@@ -94,24 +91,21 @@ ssize_t sparsegroup_size(const struct sparsegroup *g);
 
 /* position-based interface */
 void *sparsegroup_find(const struct sparsegroup *g, ssize_t index,
-			      struct sparsegroup_pos *pos, size_t elt_size);
+		       struct sparsegroup_pos *pos, size_t elt_size);
 void *sparsegroup_insert(struct sparsegroup *g,
-				const struct sparsegroup_pos *pos,
-				const void *val, size_t elt_size);
+			 const struct sparsegroup_pos *pos,
+			 const void *val, size_t elt_size);
 void sparsegroup_remove_at(struct sparsegroup *g,
-				  const struct sparsegroup_pos *pos,
-				  size_t elt_size);
+			   const struct sparsegroup_pos *pos, size_t elt_size);
 bool sparsegroup_deleted(const struct sparsegroup *g,
-				const struct sparsegroup_pos *pos);
+			 const struct sparsegroup_pos *pos);
 
 /* iteration */
 struct sparsegroup_iter sparsegroup_iter_make(const struct sparsegroup
-						     *g, size_t elt_size);
+					      *g, size_t elt_size);
 void sparsegroup_iter_reset(const struct sparsegroup *g,
-				   struct sparsegroup_iter *it,
-				   size_t elt_size);
+			    struct sparsegroup_iter *it, size_t elt_size);
 bool sparsegroup_iter_advance(const struct sparsegroup *g,
-				     struct sparsegroup_iter *it,
-				     size_t elt_size);
+			      struct sparsegroup_iter *it, size_t elt_size);
 
 #endif /* SPARSEGROUP_H */

@@ -39,7 +39,7 @@ struct hashset {
 	size_t (*hash) (const void *);
 	int (*compar) (const void *, const void *);
 
-	size_t nbucket;	
+	size_t nbucket;
 	void *buckets;
 	unsigned char *status;
 
@@ -62,11 +62,10 @@ struct hashset_iter {
 #define HASHSET_FOREACH(it, set) \
 	for ((it) = hashset_iter_make(set); hashset_iter_advance(&(it));)
 
-
 /* create, destroy */
 void hashset_init(struct hashset *s, size_t width,
-		  size_t (*hash)(const void *),
-		  int (*compar)(const void *, const void *));
+		  size_t (*hash) (const void *),
+		  int (*compar) (const void *, const void *));
 void hashset_init_copy(struct hashset *s, const struct hashset *src);
 void hashset_assign_copy(struct hashset *s, const struct hashset *src);
 void hashset_deinit(struct hashset *s);

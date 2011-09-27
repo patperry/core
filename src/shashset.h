@@ -34,7 +34,6 @@
 
 #include <stddef.h>
 
-
 struct shashset {
 	struct sparsetable table;
 	uint32_t (*hash) (const void *);
@@ -69,7 +68,7 @@ void shashset_deinit(struct shashset *s);
 static inline ssize_t shashset_count(const struct shashset *s);
 static inline size_t shashset_elt_size(const struct shashset *s);
 static inline bool shashset_equals(const struct shashset *s, const void *key1,
-				  const void *key2);
+				   const void *key2);
 static inline uint32_t shashset_hash(const struct shashset *s, const void *key);
 
 void *shashset_item(const struct shashset *s, const void *key);
@@ -84,9 +83,9 @@ void shashset_trim_excess(struct shashset *s);
 
 /* position-based operations */
 void *shashset_find(const struct shashset *s, const void *key,
-		   struct shashset_pos *pos);
+		    struct shashset_pos *pos);
 void *shashset_insert(struct shashset *s, struct shashset_pos *pos,
-		     const void *key);
+		      const void *key);
 void shashset_remove_at(struct shashset *s, struct shashset_pos *pos);
 
 /* iteration */
@@ -106,7 +105,7 @@ size_t shashset_elt_size(const struct shashset *s)
 }
 
 static inline bool shashset_equals(const struct shashset *s, const void *key1,
-				  const void *key2)
+				   const void *key2)
 {
 	return s->equals(key1, key2);
 }
