@@ -231,6 +231,13 @@ static void time_map_toggle(int iters)
 
 	getrusage(RUSAGE_SELF, &start);
 
+#if 0
+	for (pair.key = 0; pair.key < iters; pair.key++) {
+		pair.val = pair.key + 1;
+		hashset_set_item(&set, &pair);
+		hashset_remove(&set, &pair);
+	}
+#else
 	for (pair.key = 0; pair.key < iters; pair.key++) {
 		if ((existing = hashset_find(&set, &pair, &pos))) {
 			existing->val = pair.key + 1;
@@ -241,6 +248,7 @@ static void time_map_toggle(int iters)
 
 		hashset_remove_at(&set, &pos);
 	} 
+#endif
 
 	getrusage(RUSAGE_SELF, &finish);
 
