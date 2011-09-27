@@ -452,7 +452,6 @@ void hashset_remove_at(struct hashset *s, struct hashset_pos *pos)
 	assert(pos->existing != HT_MAX_BUCKETS);
 
 	size_t ix = pos->existing;
-	size_t width = s->width;
 
 	pos->insert = ix;
 	pos->existing = HT_MAX_BUCKETS;
