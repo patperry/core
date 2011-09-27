@@ -215,8 +215,33 @@ void *hashset_item(const struct hashset *s, const void *key)
 	assert(s);
 	assert(key);
 
-	struct hashset_pos pos;
-	return hashset_find(s, key, &pos);
+	const void *buckets = s->buckets;
+	const unsigned char *status = s->status;
+	const size_t bucket_count = s->nbucket;
+	const size_t width = s->width;
+	size_t num_probes = 0;	// how many times we've probed
+	const size_t bucket_count_minus_one = bucket_count - 1;
+	size_t hash = hashset_hash(s, key);
+	size_t bucknum = hash & bucket_count_minus_one;
+	void *ptr;
+	unsigned char stat;
+
+	for (num_probes = 0; num_probes < bucket_count; num_probes++) {
+		ptr = (char *)buckets + bucknum * width;
+		stat = status[bucknum];
+		if (!stat) { // bucket is empty
+			return NULL;
+		} else if (stat == HT_BUCKET_DELETED) {	// bucket empty, deleted; keep searching
+
+		} else if (!hashset_compare(s, key, ptr)) {
+			return ptr;
+		}
+		bucknum =
+		    (bucknum +
+		     JUMP_(key, num_probes + 1)) & bucket_count_minus_one;
+	}
+
+	return NULL;		
 }
 
 void *hashset_set_item(struct hashset *s, const void *key)
@@ -338,7 +363,7 @@ void *hashset_find(const struct hashset *s, const void *key,
 	size_t hash = hashset_hash(s, key);
 	size_t bucknum = hash & bucket_count_minus_one;
 	void *ptr;
-	unsigned char full, deleted;
+	unsigned char stat;
 
 	pos->hash = hash;
 	pos->insert = HT_MAX_BUCKETS;
@@ -346,14 +371,13 @@ void *hashset_find(const struct hashset *s, const void *key,
 
 	for (num_probes = 0; num_probes < bucket_count; num_probes++) {
 		ptr = (char *)buckets + bucknum * width;
-		full = status[bucknum] & HT_BUCKET_FULL;
-		deleted = status[bucknum] & HT_BUCKET_DELETED;
-		if (!full && !deleted) {	// bucket is empty
+		stat = status[bucknum];
+		if (!stat) {	// bucket is empty
 			if (pos->insert == HT_MAX_BUCKETS) {	// found no prior place to insert
 				pos->insert = bucknum;
 			}
 			return NULL;
-		} else if (!full && deleted) {	// keep searching, but mark to insert
+		} else if (stat == HT_BUCKET_DELETED) {	// empty, deleted; keep searching, mark to insert
 			if (pos->insert == HT_MAX_BUCKETS) {
 				pos->insert = bucknum;
 			}
