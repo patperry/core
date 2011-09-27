@@ -1,38 +1,46 @@
 # Process this file with automake to produce Makefile.in
 
+AM_CPPFLAGS = -Ilib -Isrc
+
 noinst_LIBRARIES = \
-		libhashset.a
+		libhashset.a \
+		libshashset.a
 
 libhashset_a_SOURCES = \
-		hashset.c \
-		hashset.h \
-		shashset.c \
-		shashset.h \
-		sparsegroup.c \
-		sparsegroup.h \
-		sparsetable.c \
-		sparsetable.h \
-		xalloc-die.c \
-		xalloc.c \
-		xalloc.h
+		src/hashset.c \
+		src/hashset.h \
+		lib/xalloc-die.c \
+		lib/xalloc.c \
+		lib/xalloc.h
+
+libshashset_a_SOURCES = \
+		src/shashset.c \
+		src/shashset.h \
+		src/sparsegroup.c \
+		src/sparsegroup.h \
+		src/sparsetable.c \
+		src/sparsetable.h \
+		lib/xalloc-die.c \
+		lib/xalloc.c \
+		lib/xalloc.h
 
 check_LIBRARIES = \
-		libcmockery.a
+		tests/libcmockery.a
 
-libcmockery_a_SOURCES = \
-		cmockery.c \
-		cmockery.h
+tests_libcmockery_a_SOURCES = \
+		tests/cmockery.c \
+		tests/cmockery.h
 
 check_PROGRAMS = \
-		hashset-test \
-		benchmark
+		tests/hashset-test \
+		tests/benchmark
 
-hashset_test_LDADD = \
+tests_hashset_test_LDADD = \
 		libhashset.a \
-		libcmockery.a \
+		tests/libcmockery.a \
 		$(LIBS)
 
-benchmark_LDADD = \
+tests_benchmark_LDADD = \
 		libhashset.a \
 		$(LIBS)
 

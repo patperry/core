@@ -12,14 +12,11 @@ AC_PREREQ(2.60)
 
 # Where to generate output; srcdir location.
 AC_CONFIG_HEADERS([config.h:config.in])dnl Keep filename to 8.3 for MS-DOS.
-AC_CONFIG_SRCDIR([hashset.c])
+AC_CONFIG_SRCDIR([src/hashset.c])
 
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_RANLIB
-
-dnl Checks for typedefs, structures, and compiler characteristics
-AC_C_RESTRICT
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
