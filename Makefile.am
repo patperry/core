@@ -7,6 +7,7 @@ noinst_LIBRARIES = \
 		libshashset.a
 
 libhashset_a_SOURCES = \
+		src/hash.h \
 		src/hashset.c \
 		src/hashset.h \
 		lib/xalloc-die.c \
