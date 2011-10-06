@@ -173,10 +173,26 @@ static void hashset_grow_delta(struct hashset *s, size_t delta)
 	size_t nbucket = min_buckets(count, nbucket0);
 
 	if (nbucket > nbucket0) {
-		struct hashset copy;
-		hashset_init_copy_sized(&copy, s, nbucket);
-		hashset_deinit(s);
-		*s = copy;
+		/* This is a little delicate:
+		 * hashset_add will call the hash and compar functions,
+		 * which expect the original set as the first argument.
+		 *
+		 * Fortunately, HASHSET_FOREACH, HASHSET_VAL and 
+		 * hashset_deinit do *not* call either of these functions.
+		 */
+		struct hashset old = *s;
+		struct hashset_iter it;
+		void *val;
+
+		memset(s, 0, sizeof(*s));
+		hashset_init_sized(s, old.width, old.hash, old.compar, nbucket);
+
+		HASHSET_FOREACH(it, &old) {
+			val = HASHSET_VAL(it);
+			hashset_add(s, val);
+		}
+
+		hashset_deinit(&old);
 	}
 }
 
