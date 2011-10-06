@@ -304,5 +304,7 @@ int main(int argc, char** argv)
 	time_map_fetch_empty(iters);
 	time_map_remove(iters);
 	time_map_toggle(iters);
+
+	return 0;
 }
 

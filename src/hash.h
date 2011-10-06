@@ -1,5 +1,5 @@
-#ifndef HASHSET_HASH_H
-#define HASHSET_HASH_H
+#ifndef CORE_HASH_H
+#define CORE_HASH_H
 
 /* Copyright 2005-2009 Daniel James.
  * Copyright 2011 Patrick Perry.
@@ -75,4 +75,4 @@ size_t hash_combine(size_t seed, size_t hash)
 	return seed;
 }
 
-#endif /* HASHSET_HASH_H */
+#endif /* CORE_HASH_H */

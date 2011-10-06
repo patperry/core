@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([hashset], [1.0], [patperry@gmail.com])
+AC_INIT([core], [1.0], [patperry@gmail.com])
 AC_CONFIG_AUX_DIR([build-aux])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])

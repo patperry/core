@@ -1,5 +1,5 @@
-#ifndef HASHSET_H
-#define HASHSET_H
+#ifndef CORE_HASHSET_H
+#define CORE_HASHSET_H
 
 /* Copyright (c) 2011, Patrick O. Perry
  * Copyright (c) 2005, Google Inc.
@@ -129,4 +129,4 @@ static inline size_t hashset_hash(const struct hashset *s, const void *key)
 	return s->hash(s, key);
 }
 
-#endif /* HASHSET_H */
+#endif /* CORE_HASHSET_H */

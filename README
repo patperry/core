@@ -1,20 +1,14 @@
 
-This is a partial port of the Google sparsehash library to C, by
-Patrick O.  Perry.  The project only implements a "hashset", not a "hashmap",
-but the functionality is equivalent.  In many cases the names of the functions
-are based on the names for the equivalent C# HashSet<T> functions.  The
-implementation for "hashset" is based on the implementation of Google's
-dense_hashset, while the implementation of "shashset" is based on
-Google's sparse_hashset.  See tests/benchmark.c and tests/test-hashset.c for
-sample usage.
+Intro
+=====
 
-Performance for our hashset is comparable to the performance of Google's
-dense_hashmap, at least on some simple benchmarks.  Notably, our
-"fetch", and "remove" are slightly faster, while our "insert" and "replace"
-are slightly slower.
+This library provides some useful functions and datastructures for C.
+The recommended way to use this project is to copy the relevant files
+into your source repository.
 
-The implementation of "shashset" is currently incomplete.
 
+Compiling
+=========
 To build the project and run the tests from the source repository, run
 
     autoreconf --install
@@ -22,7 +16,56 @@ To build the project and run the tests from the source repository, run
     make
     make check
 
-The recommended way to use this file in your project is to copy the following
-files into your project: hashset.{c,h}, xalloc.{c,h}, and xalloc-die.c.  The
-"xalloc" files can easily be replaced by your own versions of these files.
+
+Modules
+=======
+
+The library consists of the following modules, which are mostly independent,
+except that some of them depend on Xalloc:
+
+
+Hash (hash.h)
+-------------
+
+Some simple hash functions, taken from Daniel James' implementaiton in the
+boost library.
+
+Boost-1.0 Licence.
+
+
+Hashset (hashset.{c,h})
+-----------------------
+
+This is a partial port of the Google sparsehash library to C.
+The project only implements a "hashset", not a "hashmap",
+but the functionality is equivalent.  In many cases the names of the functions
+are based on the names for the equivalent C# HashSet<T> functions.  The
+implementation for "hashset" is based on the implementation of Google's
+dense_hashset, while the implementation of "shashset" is based on
+Google's sparse_hashset.  See tests/benchmark-hashset.c and
+tests/test-hashset.c for sample usage.
+
+Performance for our hashset is comparable to the performance of Google's
+dense_hashmap, at least on some simple benchmarks.  Notably, our
+"fetch", and "remove" are slightly faster, while our "insert" and "replace"
+are slightly slower.
+
+BSD Licence.
+
+
+
+Timsort (timsort-impl.h, timsort.{c,h})
+---------------------------------------
+
+This is a port of the Java/Andorw implementation of Timsort, which itself
+is a port of Tim Peter's list sort for Python.
+
+Apache-2.0 Licence
+
+
+XAlloc (xalloc.{c,h}, xalloc-die.c)
+-----------------------------------
+Allocation routines that abort on failure.
+
+BSD Licence.
 

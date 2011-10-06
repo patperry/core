@@ -1,5 +1,5 @@
-#ifndef XALLOC_H
-#define XALLOC_H
+#ifndef CORE_XALLOC_H
+#define CORE_XALLOC_H
 
 /* Copyright (c) 2011, Patrick O. Perry
  * All rights reserved.
@@ -40,4 +40,4 @@ extern void xalloc_die(void);
 void *xcalloc(size_t count, size_t size);
 void *xrealloc(void *ptr, size_t size);
 
-#endif /* XALLOC_H */
+#endif /* CORE_XALLOC_H */
