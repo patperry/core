@@ -24,6 +24,13 @@ The library consists of the following modules, which are mostly independent,
 except that some of them depend on Xalloc:
 
 
+Coreutil (coreutil.h)
+---------------------
+Macros: MAX, MIN, container_of.
+
+Public Domain.
+
+
 Hash (hash.h)
 -------------
 

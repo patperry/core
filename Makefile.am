@@ -6,6 +6,7 @@ noinst_LIBRARIES = \
 		libcore.a 
 
 libcore_a_SOURCES = \
+		src/coreutil.h \
 		src/hash.h \
 		src/hashset.c \
 		src/hashset.h \
