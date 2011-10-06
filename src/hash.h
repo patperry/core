@@ -65,7 +65,7 @@ size_t double_hash(double val)
 
 size_t ptr_hash(void *x)
 {
-	return x >> 2; /* first two bits are typically 0 */
+	return (size_t)x >> 2; /* first two bits are typically 0 */
 }
 
 /* from boost/functional/hash/hash.hpp */
