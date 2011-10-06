@@ -8,25 +8,28 @@
 #include "hashset.h"
 
 
-static size_t int_hash(const void *x)
+static size_t int_hash(const struct hashset *set, const void *x)
 {
+	(void)set;
 	return *(int *)x;
 }
 
-static int int_compar(const void *x, const void *y)
+static int int_compar(const struct hashset *set, const void *x, const void *y)
 {
+	(void)set;
 	return *(int *)x - *(int *)y;
 }
 
-static size_t int_bad_hash(const void *x)
+static size_t int_bad_hash(const struct hashset *set, const void *x)
 {
-	(void)x; // unused
+	(void)set;
+	(void)x;
 	return 1337;
 }
 
 static struct hashset set;
-static size_t (*hash) (const void *);
-static int (*compar) (const void *, const void *);
+static size_t (*hash) (const struct hashset *, const void *);
+static int (*compar) (const struct hashset *, const void *, const void *);
 static int *vals;
 static size_t count;
 

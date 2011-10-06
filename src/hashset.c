@@ -111,8 +111,10 @@ static size_t hashset_bucket_count(const struct hashset *s)
 
 static void hashset_init_sized(struct hashset *s,
 			       size_t width,
-			       size_t (*hash) (const void *),
-			       int (*compar) (const void *, const void *),
+			       size_t (*hash) (const struct hashset *,
+				       	       const void *),
+			       int (*compar) (const struct hashset *,
+				       	      const void *, const void *),
 			       size_t nbucket)
 {
 	assert(s);
@@ -193,8 +195,8 @@ void hashset_ensure_capacity(struct hashset *s, size_t n)
 
 void hashset_init(struct hashset *s,
 		  size_t width,
-		  size_t (*hash) (const void *),
-		  int (*compar) (const void *, const void *))
+		  size_t (*hash) (const struct hashset *, const void *),
+		  int (*compar) (const struct hashset *, const void *, const void *))
 {
 	assert(s);
 	assert(hash);

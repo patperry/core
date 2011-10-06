@@ -42,13 +42,14 @@ struct pair {
 	int val;
 };
 
-static size_t pair_khash(const void *x)
+static size_t pair_khash(const struct hashset *set, const void *x)
 {
 	int key = ((struct pair *)x)->key;
 	return key;
 }
 
-static int pair_kcompar(const void *x1, const void *x2)
+static int pair_kcompar(const struct hashset *set, const void *x1,
+			const void *x2)
 {
 	int key1 = ((struct pair *)x1)->key;
 	int key2 = ((struct pair *)x2)->key;
