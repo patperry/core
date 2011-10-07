@@ -61,6 +61,13 @@ BSD Licence.
 
 
 
+PQueue (pqueue.{c,h})
+---------------------
+Functions for maintaining an array as a priority queue (heap).
+
+Public Domain.
+
+
 Timsort (timsort-impl.h, timsort.{c,h})
 ---------------------------------------
 

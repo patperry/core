@@ -14,3 +14,4 @@
 /stamp-h1
 /tests/hashset-benchmark
 /tests/hashset-test
+/tests/pqueue-test

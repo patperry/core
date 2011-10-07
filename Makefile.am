@@ -10,6 +10,8 @@ libcore_a_SOURCES = \
 		src/hash.h \
 		src/hashset.c \
 		src/hashset.h \
+		src/pqueue.c \
+		src/pqueue.h \
 		src/timsort-impl.h \
 		src/timsort.c \
 		src/timsort.h \
@@ -26,9 +28,15 @@ tests_libcmockery_a_SOURCES = \
 
 check_PROGRAMS = \
 		tests/hashset-test \
+		tests/pqueue-test \
 		tests/hashset-benchmark
 
 tests_hashset_test_LDADD = \
+		libcore.a \
+		tests/libcmockery.a \
+		$(LIBS)
+
+tests_pqueue_test_LDADD = \
 		libcore.a \
 		tests/libcmockery.a \
 		$(LIBS)
