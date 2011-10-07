@@ -1,24 +1,20 @@
+#include <assert.h>
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
 #include <setjmp.h>
 #include "cmockery.h"
 
-#include "xalloc.h"
 #include "pqueue.h"
 
-
-static int compar(const void *x, const void *y)
+int compar(const struct pqueue *q, const void *x, const void *y)
 {
+	(void)q;
 	return *(int *)x - *(int *)y;
 }
 
-static int *base;
-static size_t nel;
-static size_t capacity;
-static int *vals;		// elements sorted in decending order
-static size_t nvals;
+static struct pqueue pqueue;
+static size_t count;
+static int *elts;		// elements sorted in decending order
 
 static void empty_setup_fixture()
 {
@@ -28,12 +24,11 @@ static void empty_setup_fixture()
 
 static void empty_setup()
 {
-	static int *empty_vals = NULL;
+	static int *empty_elts = NULL;
 
-	nel = 0;
-	capacity = 1024;
-	base = xmalloc(capacity * sizeof(base[0]));
-	vals = empty_vals;
+	pqueue_init(&pqueue, sizeof(int), compar);
+	count = 0;
+	elts = empty_elts;
 }
 
 static void singleton_setup_fixture()
@@ -44,13 +39,12 @@ static void singleton_setup_fixture()
 
 static void singleton_setup()
 {
-	static int singleton_vals[] = { 1234 };
+	static int singleton_elts[] = { 1234 };
 
-	empty_setup();
-	vals = singleton_vals;
-	nvals = 1;
-
-	pqueue_push(&vals[0], base, &nel, sizeof(base[0]), compar);
+	pqueue_init(&pqueue, sizeof(int), compar);
+	elts = singleton_elts;
+	count = 1;
+	pqueue_push(&pqueue, elts);
 }
 
 static void sorted5_setup_fixture()
@@ -61,16 +55,16 @@ static void sorted5_setup_fixture()
 
 static void sorted5_setup()
 {
-	static int sorted5_vals[] = { 5, 4, 3, 2, 1 };
+	static int sorted5_elts[] = { 5, 4, 3, 2, 1 };
+	size_t i;
 	
-	empty_setup();
-	vals = sorted5_vals;
-	nvals = 5;
+	pqueue_init(&pqueue, sizeof(int), compar);
+	elts = sorted5_elts;
+	count = 5;
+	
+	for (i = 0; i < count; i++)
+		pqueue_push(&pqueue, &elts[i]);
 
-	int i, n = nvals;
-	
-	for (i = 0; i < n; i++)
-		pqueue_push(&vals[i], base, &nel, sizeof(base[0]), compar);
 }
 
 static void unsorted7_setup_fixture()
@@ -81,23 +75,21 @@ static void unsorted7_setup_fixture()
 
 static void unsorted7_setup()
 {
-	static int sorted7_vals[] = { 7, 6, 5, 4, 3, 2, 1 };
-	int unsorted7_vals[] = { 2, 1, 3, 4, 7, 6, 5 };
+	static int sorted7_elts[] = { 7, 6, 5, 4, 3, 2, 1 };
+	int unsorted7_elts[] = { 2, 1, 3, 4, 7, 6, 5 };
+	size_t i;
 
-	empty_setup();
-	vals = sorted7_vals;
-	nvals = 7;
+	pqueue_init(&pqueue, sizeof(int), compar);
+	elts = sorted7_elts;
+	count = 7;
 	
-	int i, n = nvals;
-
-	for (i = 0; i < n; i++)
-		pqueue_push(&unsorted7_vals[i], base, &nel, sizeof(base[0]),
-				compar);
+	for (i = 0; i < count; i++)
+		pqueue_push(&pqueue, &unsorted7_elts[i]);
 }
 
 static void teardown()
 {
-	free(base);
+	pqueue_deinit(&pqueue);
 }
 
 static void teardown_fixture()
@@ -107,82 +99,81 @@ static void teardown_fixture()
 
 static void test_count()
 {
-	assert_int_equal(nel, nvals);
+	assert_int_equal(pqueue_count(&pqueue), count);
 }
 
 static void test_push_min_minus_one()
 {
-	int min = vals[nvals - 1];
+	int min = elts[count - 1];
 	int min_minus_one = min - 1;
-	pqueue_push(&min_minus_one, base, &nel, sizeof(base[0]), compar);
-	assert_int_equal(nel, nvals + 1);
-	assert_int_equal(base[0], vals[0]);
+	pqueue_push(&pqueue, &min_minus_one);
+	assert_int_equal(pqueue_count(&pqueue), count + 1);
+	assert_int_equal(*(int *)pqueue_top(&pqueue), elts[0]);
 }
 
 static void test_push_min()
 {
-	int min = vals[nvals - 1];
-	pqueue_push(&min, base, &nel, sizeof(base[0]), compar);
-	assert_int_equal(nel, nvals + 1);
-	assert_int_equal(base[0], vals[0]);
+	int min = elts[count - 1];
+	int elt = min;
+	pqueue_push(&pqueue, &elt);
+	assert_int_equal(pqueue_count(&pqueue), count + 1);
+	assert_int_equal(*(int *)pqueue_top(&pqueue), elts[0]);
 }
 
 static void test_push_max_minus_one()
 {
-	int max = vals[0];
+	int max = elts[0];
 	int max_minus_one = max - 1;
-	pqueue_push(&max_minus_one, base, &nel, sizeof(base[0]), compar);
-	assert_int_equal(nel, nvals + 1);
-	assert_int_equal(base[0], max);
+	pqueue_push(&pqueue, &max_minus_one);
+	assert_int_equal(pqueue_count(&pqueue), count + 1);
+	assert_int_equal(*(int *)pqueue_top(&pqueue), max);
 }
 
 static void test_push_max()
 {
-	int max = vals[0];
-	pqueue_push(&max, base, &nel, sizeof(base[0]), compar);
-	assert_int_equal(nel, nvals + 1);
-	assert_int_equal(base[0], max);
+	int max = elts[0];
+	int elt = max;
+	pqueue_push(&pqueue, &elt);
+	assert_int_equal(pqueue_count(&pqueue), count + 1);
+	assert_int_equal(*(int *)pqueue_top(&pqueue), max);
 }
 
 static void test_push_max_plus_one()
 {
-	int max = vals[0];
+	int max = (count ? elts[0] : 0);
 	int max_plus_one = max + 1;
-	pqueue_push(&max_plus_one, base, &nel, sizeof(base[0]), compar);
-	assert_int_equal(nel, nvals + 1);
-	assert_int_equal(base[0], max + 1);
+	pqueue_push(&pqueue, &max_plus_one);
+	assert_int_equal(pqueue_count(&pqueue), count + 1);
+	assert_int_equal(*(int *)pqueue_top(&pqueue), max + 1);
 }
 
 static void test_push_existing()
 {
 	size_t i, j;
 	int top;
-	int val;
-	int *copy = xcalloc(capacity, sizeof(copy[0]));
-	size_t copy_nel;
+	struct pqueue pq;
+	int elt;
 
-	for (i = 0; i < nel; i++) {
-		memcpy(copy, base, nel * sizeof(copy[0]));
-		copy_nel = nel;
-		val = vals[i];
+	for (i = 0; i < count; i++) {
+		pqueue_init_copy(&pq, &pqueue);
+		elt = elts[i];
 
-		pqueue_push(&val, copy, &copy_nel, sizeof(copy[0]), compar);
+		pqueue_push(&pq, &elt);
 
-		assert_int_equal(copy_nel, nel + 1);
+		assert_int_equal(pqueue_count(&pq), count + 1);
 
-		for (j = 0; j < nel + 1; j++) {
-			top = copy[0];
-			pqueue_pop(copy, &copy_nel, sizeof(copy[0]), compar);
-
+		for (j = 0; j < count + 1; j++) {
+			top = *(int *)pqueue_top(&pq);
+			pqueue_pop(&pq);
 			if (j <= i) {
-				assert_int_equal(top, vals[j]);
+				assert_int_equal(top, elts[j]);
 			} else {
-				assert_int_equal(top, vals[j - 1]);
+				assert_int_equal(top, elts[j - 1]);
 			}
 		}
-	}
 
-	free(copy);
+		pqueue_deinit(&pq);
+	}
 }
 
 int main()

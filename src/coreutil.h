@@ -10,7 +10,7 @@
 
 /* 0, 5, 11, 20, 34, 55, 86, 133, 203, 308, ... */
 #define ARRAY_DELTA(n) \
-	((n) ? ((n) >> 1) + 4 ? 5)
+	((n) ? ((n) >> 1) + 4 : 5)
 
 #define ARRAY_GROW(n,nmax) \
 	(((n) <= (nmax) - ARRAY_DELTA(n)) \
