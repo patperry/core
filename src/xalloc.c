@@ -30,6 +30,8 @@
 
 #include "xalloc.h"
 #include <stdlib.h>
+#include <string.h>
+
 
 void *xcalloc(size_t count, size_t size)
 {
@@ -40,6 +42,14 @@ void *xcalloc(size_t count, size_t size)
 	return res;
 }
 
+void *xmalloc(size_t size)
+{
+	void *ptr = malloc(size);
+	if (size && !ptr)
+		xalloc_die();
+	return ptr;
+}
+
 void *xrealloc(void *ptr, size_t size)
 {
 	void *res = realloc(ptr, size);
@@ -48,3 +58,12 @@ void *xrealloc(void *ptr, size_t size)
 	}
 	return res;
 }
+
+char *xstrdup(const char *s1)
+{
+	char *s = strdup(s1);
+	if (s1 && !s)
+		xalloc_die();
+	return s;
+}
+
