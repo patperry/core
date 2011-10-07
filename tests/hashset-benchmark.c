@@ -44,6 +44,7 @@ struct pair {
 
 static size_t pair_khash(const struct hashset *set, const void *x)
 {
+	(void)set;
 	int key = ((struct pair *)x)->key;
 	return key;
 }
@@ -51,6 +52,7 @@ static size_t pair_khash(const struct hashset *set, const void *x)
 static int pair_kcompar(const struct hashset *set, const void *x1,
 			const void *x2)
 {
+	(void)set;
 	int key1 = ((struct pair *)x1)->key;
 	int key2 = ((struct pair *)x2)->key;
 	return key1 - key2;

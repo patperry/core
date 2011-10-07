@@ -111,6 +111,7 @@ out:
  */
 static void NAME(binarySort) (void *a, size_t hi, size_t start,
 			      comparator compare, size_t width) {
+	(void)width;
 	assert(start <= hi);
 
 	DEFINE_TEMP(pivot);
@@ -222,6 +223,7 @@ static size_t NAME(countRunAndMakeAscending) (void *a, size_t hi,
  * @param hi the index after the last element in the range to be reversed
  */
 static void NAME(reverseRange) (void *a, size_t hi, size_t width) {
+	(void)width;
 	assert(hi > 0);
 
 	DEFINE_TEMP(t);
@@ -369,6 +371,7 @@ static int NAME(mergeAt) (struct timsort * ts, size_t i, size_t width) {
 static size_t NAME(gallopLeft) (void *key, void *base, size_t len,
 				size_t hint, comparator compare,
 				size_t width) {
+	(void)width;
 	assert(len > 0 && hint < len);
 	char *hintp = ELEM(base, hint);
 	size_t lastOfs = 0;
@@ -441,6 +444,7 @@ static size_t NAME(gallopLeft) (void *key, void *base, size_t len,
 static size_t NAME(gallopRight) (void *key, void *base, size_t len,
 				 size_t hint, comparator compare,
 				 size_t width) {
+	(void)width;
 	assert(len > 0 && hint < len);
 
 	char *hintp = ELEM(base, hint);
