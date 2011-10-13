@@ -41,6 +41,7 @@ void *xcalloc(size_t count, size_t size);
 void *xmalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
 
+void *xmemdup(const void *ptr, size_t size);
 char *xstrdup(const char *s1);
 
 #endif /* CORE_XALLOC_H */

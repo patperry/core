@@ -32,7 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 void *xcalloc(size_t count, size_t size)
 {
 	void *res = calloc(count, size);
@@ -59,6 +58,13 @@ void *xrealloc(void *ptr, size_t size)
 	return res;
 }
 
+void *xmemdup(const void *ptr, size_t size)
+{
+	void *res = xmalloc(size);
+	memcpy(res, ptr, size);
+	return res;
+}
+
 char *xstrdup(const char *s1)
 {
 	char *s = strdup(s1);
@@ -66,4 +72,3 @@ char *xstrdup(const char *s1)
 		xalloc_die();
 	return s;
 }
-
