@@ -32,19 +32,20 @@
 #include <stddef.h>
 #include <stdint.h>
 
-
 static inline size_t double_hash(double x);
 static inline size_t float_hash(float x);
 static inline size_t ptr_hash(void *x);
 
 static inline size_t hash_combine(size_t seed, size_t hash);
 
-
-
 /* from boost/functional/hash/detail/hash_float_x86.hpp */
 size_t float_hash(float val)
 {
-	union { float f; uint32_t u; } v = { val };
+	union {
+		float f;
+		uint32_t u;
+	} v = {
+	val};
 	return v.u;
 }
 
@@ -52,10 +53,18 @@ size_t float_hash(float val)
 size_t double_hash(double val)
 {
 	if (sizeof(double) == sizeof(size_t)) {
-		union { double d; size_t i; } v = { val };
+		union {
+			double d;
+			size_t i;
+		} v = {
+		val};
 		return v.i;
 	} else {
-		union {double d; uint32_t u[2]; } v = { val };
+		union {
+			double d;
+			uint32_t u[2];
+		} v = {
+		val};
 		size_t seed = v.u[0];
 		size_t hash = v.u[1];
 		seed ^= hash + (seed << 6) + (seed >> 2);
@@ -65,7 +74,7 @@ size_t double_hash(double val)
 
 size_t ptr_hash(void *x)
 {
-	return (size_t)x >> 2; /* first two bits are typically 0 */
+	return (size_t)x >> 2;	/* first two bits are typically 0 */
 }
 
 /* from boost/functional/hash/hash.hpp */

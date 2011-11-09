@@ -65,7 +65,8 @@ struct hashset_iter {
 /* create, destroy */
 void hashset_init(struct hashset *s, size_t width,
 		  size_t (*hash) (const struct hashset *, const void *),
-		  int (*compar) (const struct hashset *, const void *, const void *));
+		  int (*compar) (const struct hashset *, const void *,
+				 const void *));
 void hashset_init_copy(struct hashset *s, const struct hashset *src);
 void hashset_assign_copy(struct hashset *s, const struct hashset *src);
 void hashset_deinit(struct hashset *s);

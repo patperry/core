@@ -1,7 +1,6 @@
 #include <assert.h>
 #include "coreutil.h"
 
-
 size_t array_grow(size_t count, size_t capacity, size_t delta,
 		  size_t capacity_max)
 {
@@ -16,4 +15,3 @@ size_t array_grow(size_t count, size_t capacity, size_t delta,
 
 	return capacity;
 }
-

@@ -136,8 +136,7 @@ struct timsort {
 };
 
 static int timsort_init(struct timsort *ts, void *a, size_t len,
-			int (*c) (const void *, const void *),
-			size_t width);
+			int (*c) (const void *, const void *), size_t width);
 static void timsort_deinit(struct timsort *ts);
 static size_t minRunLength(size_t n);
 static void pushRun(struct timsort *ts, void *runBase, size_t runLen);
@@ -153,8 +152,7 @@ static void *ensureCapacity(struct timsort *ts, size_t minCapacity,
  * @param width the element width
  */
 static int timsort_init(struct timsort *ts, void *a, size_t len,
-			int (*c) (const void *, const void *),
-			size_t width)
+			int (*c) (const void *, const void *), size_t width)
 {
 	assert(ts);
 	assert(a || !len);
@@ -360,7 +358,7 @@ static void *ensureCapacity(struct timsort *ts, size_t minCapacity,
 #undef WIDTH
 
 int timsort(void *a, size_t nel, size_t width,
-	int (*c) (const void *, const void *))
+	    int (*c) (const void *, const void *))
 {
 	switch (width) {
 	case 4:

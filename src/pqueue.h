@@ -14,7 +14,8 @@ struct pqueue {
 
 /* create, destroy, assign */
 void pqueue_init(struct pqueue *q, size_t width,
-		 int (*compar)(const struct pqueue*, const void *, const void *));
+		 int (*compar) (const struct pqueue *, const void *,
+				const void *));
 void pqueue_init_copy(struct pqueue *q, const struct pqueue *src);
 void pqueue_assign_copy(struct pqueue *q, const struct pqueue *src);
 void pqueue_deinit(struct pqueue *q);
@@ -30,14 +31,12 @@ int pqueue_ensure_capacity(struct pqueue *q, size_t n);
 
 static inline void *pqueue_top(const struct pqueue *q);
 
-
 /* methods */
 void *pqueue_push(struct pqueue *q, const void *val);
 void pqueue_pop(struct pqueue *q);
 void pqueue_update_top(struct pqueue *q);
 void pqueue_clear(struct pqueue *q);
 void pqueue_trim_excess(struct pqueue *q);
-
 
 /* inline funciton definitions */
 size_t pqueue_count(const struct pqueue *q)

@@ -7,30 +7,25 @@
 #include "xalloc.h"
 #include "pqueue.h"
 
-
 static void *array_push(const void *val, void *base, size_t *nelp, size_t width,
-		 int (*compar)(const struct pqueue *,
-			       const void *,
-			       const void *),
-		 const struct pqueue *ctx);
+			int (*compar) (const struct pqueue *,
+				       const void *,
+				       const void *), const struct pqueue *ctx);
 
 static void array_pop(void *base, size_t *nelp, size_t width,
-	       int (*compar)(const struct pqueue *,
-			      const void *,
-			      const void *),
-	       const struct pqueue *ctx);
+		      int (*compar) (const struct pqueue *,
+				     const void *,
+				     const void *), const struct pqueue *ctx);
 
 static void array_update_top(void *base, size_t nel, size_t width,
-		      int (*compar)(const struct pqueue *,
-			      	    const void *,
-				    const void *),
-		      const struct pqueue *ctx);
-
-
+			     int (*compar) (const struct pqueue *,
+					    const void *,
+					    const void *),
+			     const struct pqueue *ctx);
 
 void pqueue_init(struct pqueue *q, size_t width,
-		 int (*compar)(const struct pqueue*, const void *,
-			       const void *))
+		 int (*compar) (const struct pqueue *, const void *,
+				const void *))
 {
 	assert(compar);
 	q->width = width;
@@ -127,10 +122,9 @@ void pqueue_trim_excess(struct pqueue *q)
 }
 
 void *array_push(const void *val, void *base, size_t *nelp, size_t width,
-		 int (*compar)(const struct pqueue *,
-			       const void *,
-			       const void *),
-		 const struct pqueue *ctx)
+		 int (*compar) (const struct pqueue *,
+				const void *,
+				const void *), const struct pqueue *ctx)
 {
 	const size_t nel = *nelp;
 	size_t icur = nel;
@@ -157,12 +151,10 @@ void *array_push(const void *val, void *base, size_t *nelp, size_t width,
 	return cur;
 }
 
-
 void array_pop(void *base, size_t *nelp, size_t width,
-	       int (*compar)(const struct pqueue *,
+	       int (*compar) (const struct pqueue *,
 			      const void *,
-			      const void *),
-	       const struct pqueue *ctx)
+			      const void *), const struct pqueue *ctx)
 {
 	assert(nelp);
 	assert(*nelp > 0);
@@ -207,16 +199,15 @@ void array_pop(void *base, size_t *nelp, size_t width,
 	}
 
 	// actually do the copy
-	memcpy(cur, val, width);	
+	memcpy(cur, val, width);
 out:
 	*nelp = n;
 }
 
 void array_update_top(void *base, size_t nel, size_t width,
-		       int (*compar)(const struct pqueue*,
-			       	     const void *,
-			       	     const void *),
-		       const struct pqueue *ctx)
+		      int (*compar) (const struct pqueue *,
+				     const void *,
+				     const void *), const struct pqueue *ctx)
 {
 	/* make a temporary copy of the old top */
 	void *val = alloca(width);

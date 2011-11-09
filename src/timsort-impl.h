@@ -18,8 +18,7 @@
 static void NAME(binarySort) (void *a, size_t hi, size_t start,
 			      comparator compare, size_t width);
 static size_t NAME(countRunAndMakeAscending) (void *a, size_t hi,
-					      comparator compare,
-					      size_t width);
+					      comparator compare, size_t width);
 static void NAME(reverseRange) (void *a, size_t hi, size_t width);
 static int NAME(mergeCollapse) (struct timsort * ts, size_t width);
 static int NAME(mergeForceCollapse) (struct timsort * ts, size_t width);
@@ -34,7 +33,7 @@ static int NAME(mergeHi) (struct timsort * ts, void *base1, size_t len1,
 			  void *base2, size_t len2, size_t width);
 
 static int NAME(timsort) (void *a, size_t nel, size_t width,
-			int (*c) (const void *, const void *)) {
+			  int (*c) (const void *, const void *)) {
 	assert(a || !nel || !width);
 	assert(c);
 
@@ -369,8 +368,7 @@ static int NAME(mergeAt) (struct timsort * ts, size_t i, size_t width) {
  *    should follow it.
  */
 static size_t NAME(gallopLeft) (void *key, void *base, size_t len,
-				size_t hint, comparator compare,
-				size_t width) {
+				size_t hint, comparator compare, size_t width) {
 	(void)width;
 	assert(len > 0 && hint < len);
 	char *hintp = ELEM(base, hint);
@@ -380,8 +378,7 @@ static size_t NAME(gallopLeft) (void *key, void *base, size_t len,
 	if (compare(key, hintp) > 0) {
 		// Gallop right until a[hint+lastOfs] < key <= a[hint+ofs]
 		size_t maxOfs = len - hint;
-		while (ofs < maxOfs
-		       && compare(key, ELEM(hintp, ofs)) > 0) {
+		while (ofs < maxOfs && compare(key, ELEM(hintp, ofs)) > 0) {
 			lastOfs = ofs;
 			ofs = (ofs << 1) + 1;	// eventually this becomes SIZE_MAX
 		}
@@ -394,8 +391,7 @@ static size_t NAME(gallopLeft) (void *key, void *base, size_t len,
 	} else {		// key <= a[hint]
 		// Gallop left until a[hint-ofs] < key <= a[hint-lastOfs]
 		const size_t maxOfs = hint + 1;
-		while (ofs < maxOfs
-		       && compare(key, ELEM(hintp, -ofs)) <= 0) {
+		while (ofs < maxOfs && compare(key, ELEM(hintp, -ofs)) <= 0) {
 			lastOfs = ofs;
 			ofs = (ofs << 1) + 1;	// no need to check for overflow
 		}
@@ -454,8 +450,7 @@ static size_t NAME(gallopRight) (void *key, void *base, size_t len,
 	if (compare(key, hintp) < 0) {
 		// Gallop left until a[hint - ofs] <= key < a[hint - lastOfs]
 		size_t maxOfs = hint + 1;
-		while (ofs < maxOfs
-		       && compare(key, ELEM(hintp, -ofs)) < 0) {
+		while (ofs < maxOfs && compare(key, ELEM(hintp, -ofs)) < 0) {
 			lastOfs = ofs;
 			ofs = (ofs << 1) + 1;	// no need to check for overflow
 		}
@@ -469,8 +464,7 @@ static size_t NAME(gallopRight) (void *key, void *base, size_t len,
 	} else {		// a[hint] <= key
 		// Gallop right until a[hint + lastOfs] <= key < a[hint + ofs]
 		size_t maxOfs = len - hint;
-		while (ofs < maxOfs
-		       && compare(key, ELEM(hintp, ofs)) >= 0) {
+		while (ofs < maxOfs && compare(key, ELEM(hintp, ofs)) >= 0) {
 			lastOfs = ofs;
 			ofs = (ofs << 1) + 1;	// no need to check for overflow
 		}
@@ -755,8 +749,7 @@ static int NAME(mergeHi) (struct timsort * ts, void *base1, size_t len1,
 
 			count2 =
 			    len2 - CALL(gallopLeft) (cursor1, tmp, len2,
-						     len2 - 1, compare,
-						     width);
+						     len2 - 1, compare, width);
 			if (count2 != 0) {
 				dest = ELEM(dest, -count2);
 				cursor2 = ELEM(cursor2, -count2);
