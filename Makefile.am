@@ -3,9 +3,10 @@
 AM_CPPFLAGS = -Ilib -Isrc
 
 noinst_LIBRARIES = \
-		libcore.a 
+		libcore.a
 
 libcore_a_SOURCES = \
+		src/coreutil.c \
 		src/coreutil.h \
 		src/hash.h \
 		src/hashset.c \

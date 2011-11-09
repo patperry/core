@@ -85,7 +85,7 @@ int pqueue_ensure_capacity(struct pqueue *q, size_t n)
 
 static void pqueue_grow(struct pqueue *q)
 {
-	q->capacity = ARRAY_GROW(q->capacity, SIZE_MAX);
+	q->capacity = ARRAY_GROW1(q->capacity, SIZE_MAX);
 	q->base = xrealloc(q->base, q->capacity * q->width);
 }
 
