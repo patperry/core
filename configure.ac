@@ -15,7 +15,8 @@ AC_CONFIG_HEADERS([config.h:config.in])dnl Keep filename to 8.3 for MS-DOS.
 AC_CONFIG_SRCDIR([src/hashset.c])
 
 dnl Checks for programs.
-AC_PROG_CC
+AM_PROG_AR
+AM_PROG_CC_C_O
 AC_PROG_RANLIB
 
 AC_CONFIG_FILES([Makefile])
