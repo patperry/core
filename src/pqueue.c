@@ -78,16 +78,17 @@ int pqueue_ensure_capacity(struct pqueue *q, size_t n)
 	}
 }
 
-static void pqueue_grow(struct pqueue *q)
+static void pqueue_grow(struct pqueue *q, size_t delta)
 {
-	q->capacity = ARRAY_GROW1(q->capacity, SIZE_MAX);
-	q->base = xrealloc(q->base, q->capacity * q->width);
+	if (needs_grow(q->count + delta, &q->capacity)) {
+		q->base = xrealloc(q->base, q->capacity * q->width);
+	}
 }
 
 void *pqueue_push(struct pqueue *q, const void *val)
 {
 	if (q->count == q->capacity)
-		pqueue_grow(q);
+		pqueue_grow(q, 1);
 
 	return array_push(val, q->base, &q->count, q->width, q->compar, q);
 }

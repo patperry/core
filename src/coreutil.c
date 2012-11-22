@@ -1,17 +1,47 @@
 #include <assert.h>
+#include <stdint.h>
 #include "coreutil.h"
 
-size_t array_grow(size_t count, size_t capacity, size_t delta,
-		  size_t capacity_max)
+/* 0, 5, 11, 20, 34, 55, 86, 133, 203, 308, ... */
+int needs_grow(size_t minlen, size_t *len)
 {
-	assert(count <= capacity);
-	assert(capacity <= capacity_max);
-	assert(delta <= capacity_max - count);
+	if (minlen <= *len)
+		return 0;
 
-	size_t capacity_min = count + delta;
-	while (capacity < capacity_min) {
-		capacity = ARRAY_GROW1(capacity, capacity_max);
+	size_t newlen = *len;
+
+	while (newlen < minlen) {
+		size_t delta = newlen ? (newlen / 2) + 4 : 5;
+		if (newlen <= SIZE_MAX - delta) {
+			newlen += delta;
+		} else {
+			newlen = SIZE_MAX;
+		}
 	}
 
-	return capacity;
+	*len = newlen;
+
+	return 1;
+}
+
+
+ptrdiff_t find_index(size_t i, const size_t *base, size_t nel)
+{
+	const size_t *b = base;
+	const size_t *ptr;
+	size_t nz;
+
+	for (nz = nel; nz != 0; nz /= 2) {
+		ptr = b + (nz / 2);
+		if (i == *ptr) {
+			return ptr - base;
+		}
+		if (i > *ptr) {
+			b = ptr + 1;
+			nz--;
+		}
+	}
+
+	/* not found */
+	return ~((ptrdiff_t)(b - base));
 }
