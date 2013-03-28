@@ -13,6 +13,8 @@ libcore_a_SOURCES = \
 		src/hashset.h \
 		src/ieee754.c \
 		src/ieee754.h \
+		src/intset.c \
+		src/intset.h \
 		src/pqueue.c \
 		src/pqueue.h \
 		src/timsort-impl.h \
