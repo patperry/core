@@ -13,6 +13,8 @@ struct intset {
 void intset_init(struct intset *s);
 void intset_init_copy(struct intset *s, const struct intset *src);
 void intset_assign_copy(struct intset *s, const struct intset *src);
+void intset_assign_array(struct intset *s, const ptrdiff_t *vals, size_t n,
+			 int sorted);
 void intset_deinit(struct intset *s);
 
 /* properties */

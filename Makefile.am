@@ -20,6 +20,8 @@ libcore_a_SOURCES = \
 		src/timsort-impl.h \
 		src/timsort.c \
 		src/timsort.h \
+		src/uintset.c \
+		src/uintset.h \
 		src/xalloc-die.c \
 		src/xalloc.c \
 		src/xalloc.h

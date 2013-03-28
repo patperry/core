@@ -1,11 +1,23 @@
 #include <assert.h>		// assert
 #include <stddef.h>		// ptrdiff_t, size_t, NULL
-#include <stdlib.h>		// free
+#include <stdlib.h>		// free, qsort
 #include <string.h>		// memcpy, memmove
 #include "coreutil.h"		// needs_grow
 #include "xalloc.h"		// xrealloc
 
 #include "intset.h"
+
+static int compare(const void *px, const void *py)
+{
+	ptrdiff_t x = *(ptrdiff_t *)px;
+	ptrdiff_t y = *(ptrdiff_t *)py;
+
+	if (x > y)
+		return +1;
+	if (x < y)
+		return -1;
+	return 0;
+}
 
 void intset_init(struct intset *s)
 {
@@ -32,9 +44,19 @@ void intset_assign_copy(struct intset *s, const struct intset *src)
 	size_t n;
 
 	intset_get_vals(src, &vals, &n);
+	intset_assign_array(s, vals, n, 1);
+}
+
+void intset_assign_array(struct intset *s, const ptrdiff_t *vals, size_t n,
+			 int sorted)
+{
 	intset_ensure_capacity(s, n);
 	memcpy(s->vals, vals, n * sizeof(ptrdiff_t));
 	s->n = n;
+
+	if (!sorted) {
+		qsort(s->vals, s->n, sizeof(ptrdiff_t), compare);
+	}
 }
 
 void intset_deinit(struct intset *s)
