@@ -19,6 +19,7 @@ libcore_a_SOURCES = \
 		src/pqueue.h \
 		src/timsort-impl.h \
 		src/timsort.c \
+		src/timsort_r.c \
 		src/timsort.h \
 		src/uintset.c \
 		src/uintset.h \

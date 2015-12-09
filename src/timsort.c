@@ -17,6 +17,9 @@
 
 #include <assert.h>		// assert
 #include <errno.h>		// EINVAL
+#if defined(_MSC_VER)
+# include <malloc.h>		// _alloca
+#endif
 #include <stddef.h>		// size_t, NULL
 #include <stdlib.h>		// malloc, free
 #include <string.h>		// memcpy, memmove
@@ -68,7 +71,12 @@
  */
 /* #undef MALLOC_STACK */
 
-#define DEFINE_TEMP(temp) char temp[WIDTH]
+#if defined(_MSC_VER)
+# define DEFINE_TEMP(temp) void *temp = _alloca(WIDTH)
+#else
+# define DEFINE_TEMP(temp) char temp[WIDTH]
+#endif
+
 #define ASSIGN(x, y) memcpy(x, y, WIDTH)
 #define INCPTR(x) ((void *)((char *)(x) + WIDTH))
 #define DECPTR(x) ((void *)((char *)(x) - WIDTH))
@@ -84,7 +92,27 @@
 #define NAME(x) MAKE_STR(x, WIDTH)
 #define CALL(x) NAME(x)
 
+
+#ifdef IS_TIMSORT_R
+/*
+ * Note order of elements to comparator matches that of C11 qsort_s,
+ * not BSD qsort_r or Windows qsort_s
+ */
+typedef int (*comparator) (const void *x, const void *y, void *thunk);
+#define CMPPARAMS(compar, thunk) comparator compar, void *thunk
+#define CMPARGS(compar, thunk) (compar), (thunk)
+#define CMP(compar, thunk, x, y) (compar((x), (y), (thunk)))
+#define TIMSORT timsort_r
+
+#else
+
 typedef int (*comparator) (const void *x, const void *y);
+#define CMPPARAMS(compar, thunk) comparator compar
+#define CMPARGS(compar, thunk) (compar)
+#define CMP(compar, thunk, x, y) (compar((x), (y)))
+#define TIMSORT timsort
+
+#endif /* IS_TIMSORT_R */
 
 struct timsort_run {
 	void *base;
@@ -101,7 +129,10 @@ struct timsort {
 	/**
 	 * The comparator for this sort.
 	 */
-	int (*c) (const void *x, const void *y);
+	comparator c;
+#ifdef IS_TIMSORT_R
+	void *carg;
+#endif
 
 	/**
 	 * This controls when we get *into* galloping mode.  It is initialized
@@ -136,7 +167,8 @@ struct timsort {
 };
 
 static int timsort_init(struct timsort *ts, void *a, size_t len,
-			int (*c) (const void *, const void *), size_t width);
+			CMPPARAMS(c, carg),
+			size_t width);
 static void timsort_deinit(struct timsort *ts);
 static size_t minRunLength(size_t n);
 static void pushRun(struct timsort *ts, void *runBase, size_t runLen);
@@ -152,8 +184,11 @@ static void *ensureCapacity(struct timsort *ts, size_t minCapacity,
  * @param width the element width
  */
 static int timsort_init(struct timsort *ts, void *a, size_t len,
-			int (*c) (const void *, const void *), size_t width)
+			CMPPARAMS(c, carg),
+			size_t width)
 {
+	int err = 0;
+
 	assert(ts);
 	assert(a || !len);
 	assert(c);
@@ -164,11 +199,15 @@ static int timsort_init(struct timsort *ts, void *a, size_t len,
 	ts->a = a;
 	ts->a_length = len;
 	ts->c = c;
+#ifdef IS_TIMSORT_R
+	ts->carg = carg;
+#endif
 
 	// Allocate temp storage (which may be increased later if necessary)
 	ts->tmp_length = (len < 2 * INITIAL_TMP_STORAGE_LENGTH ?
 			  len >> 1 : INITIAL_TMP_STORAGE_LENGTH);
 	ts->tmp = malloc(ts->tmp_length * width);
+	err |= ts->tmp == NULL;
 
 	/*
 	 * Allocate runs-to-be-merged stack (which cannot be expanded).  The
@@ -244,11 +283,12 @@ static int timsort_init(struct timsort *ts, void *a, size_t len,
 	//stackLen = (len < 120 ? 5 : len < 1542 ? 10 : len < 119151 ? 19 : 40);
 
 	ts->run = malloc(ts->stackLen * sizeof(ts->run[0]));
+	err |= ts->run == NULL;
 #else
 	ts->stackLen = MAX_STACK;
 #endif
 
-	if (ts->tmp && ts->run) {
+	if (!err) {
 		return SUCCESS;
 	} else {
 		timsort_deinit(ts);
@@ -301,8 +341,9 @@ static void pushRun(struct timsort *ts, void *runBase, size_t runLen)
 {
 	assert(ts->stackSize < ts->stackLen);
 
-	ts->run[ts->stackSize++] = (struct timsort_run) {
-	runBase, runLen};
+	ts->run[ts->stackSize].base = runBase;
+	ts->run[ts->stackSize].len = runLen;
+	ts->stackSize++;
 }
 
 /**
@@ -357,17 +398,17 @@ static void *ensureCapacity(struct timsort *ts, size_t minCapacity,
 #include "timsort-impl.h"
 #undef WIDTH
 
-int timsort(void *a, size_t nel, size_t width,
-	    int (*c) (const void *, const void *))
+
+int TIMSORT(void *a, size_t nel, size_t width, CMPPARAMS(c, carg))
 {
 	switch (width) {
 	case 4:
-		return timsort_4(a, nel, width, c);
+		return timsort_4(a, nel, width, CMPARGS(c, carg));
 	case 8:
-		return timsort_8(a, nel, width, c);
+		return timsort_8(a, nel, width, CMPARGS(c, carg));
 	case 16:
-		return timsort_16(a, nel, width, c);
+		return timsort_16(a, nel, width, CMPARGS(c, carg));
 	default:
-		return timsort_width(a, nel, width, c);
+		return timsort_width(a, nel, width, CMPARGS(c, carg));
 	}
 }
