@@ -36,8 +36,9 @@
 
 struct hashset {
 	size_t width;
-	size_t (*hash) (const struct hashset *, const void *);
-	int (*compar) (const struct hashset *, const void *, const void *);
+	size_t (*hash) (const void *, void *);
+	int (*compar) (const void *, const void *, void *);
+	void *context;
 
 	size_t nbucket;
 	void *buckets;
@@ -64,9 +65,9 @@ struct hashset_iter {
 
 /* create, destroy */
 void hashset_init(struct hashset *s, size_t width,
-		  size_t (*hash) (const struct hashset *, const void *),
-		  int (*compar) (const struct hashset *, const void *,
-				 const void *));
+		  size_t (*hash) (const void *, void *),
+		  int (*compar) (const void *, const void *, void *),
+		  void *context);
 void hashset_init_copy(struct hashset *s, const struct hashset *src);
 void hashset_assign_copy(struct hashset *s, const struct hashset *src);
 void hashset_deinit(struct hashset *s);
@@ -122,12 +123,12 @@ size_t hashset_width(const struct hashset *s)
 static inline int hashset_compare(const struct hashset *s, const void *key1,
 				  const void *key2)
 {
-	return s->compar(s, key1, key2);
+	return s->compar(key1, key2, s->context);
 }
 
 static inline size_t hashset_hash(const struct hashset *s, const void *key)
 {
-	return s->hash(s, key);
+	return s->hash(key, s->context);
 }
 
 #endif /* CORE_HASHSET_H */

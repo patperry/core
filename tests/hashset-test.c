@@ -8,28 +8,28 @@
 #include "hashset.h"
 
 
-static size_t int_hash(const struct hashset *set, const void *x)
+static size_t int_hash(const void *x, void *context)
 {
-	(void)set;
+	(void)context;
 	return *(int *)x;
 }
 
-static int int_compar(const struct hashset *set, const void *x, const void *y)
+static int int_compar(const void *x, const void *y, void *context)
 {
-	(void)set;
+	(void)context;
 	return *(int *)x - *(int *)y;
 }
 
-static size_t int_bad_hash(const struct hashset *set, const void *x)
+static size_t int_bad_hash(const void *x, void *context)
 {
-	(void)set;
+	(void)context;
 	(void)x;
 	return 1337;
 }
 
 static struct hashset set;
-static size_t (*hash) (const struct hashset *, const void *);
-static int (*compar) (const struct hashset *, const void *, const void *);
+static size_t (*hash) (const void *, void *);
+static int (*compar) (const void *, const void *, void *);
 static int *vals;
 static size_t count;
 
@@ -51,7 +51,7 @@ static void empty_setup()
 
 	hash = int_hash;
 	compar = int_compar;
-	hashset_init(&set, sizeof(int), hash, compar);
+	hashset_init(&set, sizeof(int), hash, compar, NULL);
 	
 	vals = empty_vals;
 	count = 0;
@@ -98,7 +98,7 @@ static void big_bad_setup()
 {
 	hash = int_bad_hash;
 	compar = int_compar;
-	hashset_init(&set, sizeof(int), hash, compar);
+	hashset_init(&set, sizeof(int), hash, compar, NULL);
 	
 	count = 151;
 	vals = malloc(count * sizeof(*vals));

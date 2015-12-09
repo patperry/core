@@ -111,10 +111,10 @@ static size_t hashset_bucket_count(const struct hashset *s)
 
 static void hashset_init_sized(struct hashset *s,
 			       size_t width,
-			       size_t (*hash) (const struct hashset *,
-					       const void *),
-			       int (*compar) (const struct hashset *,
-					      const void *, const void *),
+			       size_t (*hash) (const void *, void *),
+			       int (*compar) (const void *, const void *,
+					      void *),
+			       void *context,
 			       size_t nbucket)
 {
 	assert(s);
@@ -122,7 +122,7 @@ static void hashset_init_sized(struct hashset *s,
 	assert(compar);
 	assert(nbucket >= HT_MIN_BUCKETS);
 
-	hashset_init(s, width, hash, compar);
+	hashset_init(s, width, hash, compar, context);
 
 	s->nbucket = nbucket;
 	s->buckets = xcalloc(nbucket, width);
@@ -142,7 +142,8 @@ static void hashset_init_copy_sized(struct hashset *s,
 	struct hashset_iter it;
 	const void *val;
 
-	hashset_init_sized(s, src->width, src->hash, src->compar, nbucket);
+	hashset_init_sized(s, src->width, src->hash, src->compar,
+			   src->context, nbucket);
 
 	HASHSET_FOREACH(it, src) {
 		val = HASHSET_VAL(it);
@@ -185,7 +186,8 @@ static void hashset_grow_delta(struct hashset *s, size_t delta)
 		void *val;
 
 		memset(s, 0, sizeof(*s));
-		hashset_init_sized(s, old.width, old.hash, old.compar, nbucket);
+		hashset_init_sized(s, old.width, old.hash, old.compar,
+				   old.context, nbucket);
 
 		HASHSET_FOREACH(it, &old) {
 			val = HASHSET_VAL(it);
@@ -209,11 +211,10 @@ void hashset_ensure_capacity(struct hashset *s, size_t n)
 	}
 }
 
-void hashset_init(struct hashset *s,
-		  size_t width,
-		  size_t (*hash) (const struct hashset *, const void *),
-		  int (*compar) (const struct hashset *, const void *,
-				 const void *))
+void hashset_init(struct hashset *s, size_t width,
+		  size_t (*hash) (const void *, void *),
+		  int (*compar) (const void *, const void *, void *),
+		  void *context)
 {
 	assert(s);
 	assert(hash);
@@ -226,6 +227,7 @@ void hashset_init(struct hashset *s,
 	s->count = 0;
 	s->hash = hash;
 	s->compar = compar;
+	s->context = context;
 	hashset_reset_thresholds(s, 0);
 }
 
@@ -412,7 +414,8 @@ void hashset_trim_excess(struct hashset *s)
 	void *val;
 
 	memset(s, 0, sizeof(*s));
-	hashset_init_sized(s, old.width, old.hash, old.compar, nbucket);
+	hashset_init_sized(s, old.width, old.hash, old.compar, old.context,
+			   nbucket);
 
 	HASHSET_FOREACH(it, &old) {
 		val = HASHSET_VAL(it);

@@ -42,17 +42,16 @@ struct pair {
 	int val;
 };
 
-static size_t pair_khash(const struct hashset *set, const void *x)
+static size_t pair_khash(const void *x, void *context)
 {
-	(void)set;
+	(void)context;
 	int key = ((struct pair *)x)->key;
 	return key;
 }
 
-static int pair_kcompar(const struct hashset *set, const void *x1,
-			const void *x2)
+static int pair_kcompar(const void *x1, const void *x2, void *context)
 {
-	(void)set;
+	(void)context;
 	int key1 = ((struct pair *)x1)->key;
 	int key2 = ((struct pair *)x2)->key;
 	return key1 - key2;
@@ -77,7 +76,7 @@ static void time_map_grow(int iters)
 	struct rusage start, finish;
 	struct pair pair;
 
-	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
+	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar, NULL);
 	getrusage(RUSAGE_SELF, &start);
 	
 	for (pair.key = 0; pair.key < iters; pair.key++) {
@@ -98,7 +97,7 @@ static void time_map_grow_predicted(int iters)
 	struct pair pair;
 
 
-	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
+	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar, NULL);
 	hashset_ensure_capacity(&set, iters);
 	getrusage(RUSAGE_SELF, &start);
 	
@@ -119,7 +118,7 @@ static void time_map_replace(int iters)
 	struct rusage start, finish;
 	struct pair pair;
 
-	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
+	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar, NULL);
 	for (pair.key = 0; pair.key < iters; pair.key++) {
 		pair.val = pair.key + 1;	
 		hashset_set_item(&set, &pair);
@@ -145,7 +144,7 @@ static void time_map_fetch(int iters, const int *indices, char const* title)
 	struct pair pair;
 	int r, i;
 
-	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
+	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar, NULL);
 	for (pair.key = 0; pair.key < iters; pair.key++) {
 		pair.val = pair.key + 1;	
 		hashset_set_item(&set, &pair);
@@ -214,7 +213,7 @@ static void time_map_fetch_empty(int iters) {
   	int r;
 	int i;
 
-	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
+	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar, NULL);
 	r = 1;
 	getrusage(RUSAGE_SELF, &start);
 
@@ -236,7 +235,7 @@ static void time_map_remove(int iters)
 	struct pair pair;
 	int i;
 
-	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
+	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar, NULL);
 	for (pair.key = 0; pair.key < iters; pair.key++) {
 		pair.val = pair.key + 1;	
 		hashset_set_item(&set, &pair);
@@ -261,7 +260,7 @@ static void time_map_toggle(int iters)
 	struct pair pair, *existing;
 	struct hashset_pos pos;
 
-	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar);
+	hashset_init(&set, sizeof(struct pair), pair_khash, pair_kcompar, NULL);
 
 	getrusage(RUSAGE_SELF, &start);
 
