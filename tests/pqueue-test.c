@@ -6,9 +6,9 @@
 
 #include "pqueue.h"
 
-int compar(const struct pqueue *q, const void *x, const void *y)
+int compar(const void *x, const void *y, void *context)
 {
-	(void)q;
+	(void)context;
 	return *(int *)x - *(int *)y;
 }
 
@@ -26,7 +26,7 @@ static void empty_setup()
 {
 	static int *empty_elts = NULL;
 
-	pqueue_init(&pqueue, sizeof(int), compar);
+	pqueue_init(&pqueue, sizeof(int), compar, NULL);
 	count = 0;
 	elts = empty_elts;
 }
@@ -41,7 +41,7 @@ static void singleton_setup()
 {
 	static int singleton_elts[] = { 1234 };
 
-	pqueue_init(&pqueue, sizeof(int), compar);
+	pqueue_init(&pqueue, sizeof(int), compar, NULL);
 	elts = singleton_elts;
 	count = 1;
 	pqueue_push(&pqueue, elts);
@@ -58,7 +58,7 @@ static void sorted5_setup()
 	static int sorted5_elts[] = { 5, 4, 3, 2, 1 };
 	size_t i;
 	
-	pqueue_init(&pqueue, sizeof(int), compar);
+	pqueue_init(&pqueue, sizeof(int), compar, NULL);
 	elts = sorted5_elts;
 	count = 5;
 	
@@ -79,7 +79,7 @@ static void unsorted7_setup()
 	int unsorted7_elts[] = { 2, 1, 3, 4, 7, 6, 5 };
 	size_t i;
 
-	pqueue_init(&pqueue, sizeof(int), compar);
+	pqueue_init(&pqueue, sizeof(int), compar, NULL);
 	elts = sorted7_elts;
 	count = 7;
 	

@@ -5,7 +5,8 @@
 
 struct pqueue {
 	size_t width;
-	int (*compar) (const struct pqueue *, const void *, const void *);
+	int (*compar) (const void *, const void *, void *);
+	void *context;
 
 	void *base;
 	size_t count;
@@ -14,8 +15,8 @@ struct pqueue {
 
 /* create, destroy, assign */
 void pqueue_init(struct pqueue *q, size_t width,
-		 int (*compar) (const struct pqueue *, const void *,
-				const void *));
+		 int (*compar) (const void *, const void *, void *),
+		 void *context);
 void pqueue_init_copy(struct pqueue *q, const struct pqueue *src);
 void pqueue_assign_copy(struct pqueue *q, const struct pqueue *src);
 void pqueue_deinit(struct pqueue *q);
@@ -51,7 +52,7 @@ size_t pqueue_width(const struct pqueue *q)
 
 int pqueue_compare(const struct pqueue *q, const void *val1, const void *val2)
 {
-	return q->compar(q, val1, val2);
+	return q->compar(val1, val2, q->context);
 }
 
 static inline size_t pqueue_capacity(const struct pqueue *q)

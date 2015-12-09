@@ -8,28 +8,25 @@
 #include "pqueue.h"
 
 static void *array_push(const void *val, void *base, size_t *nelp, size_t width,
-			int (*compar) (const struct pqueue *,
-				       const void *,
-				       const void *), const struct pqueue *ctx);
+			int (*compar) (const void *, const void *, void *),
+			void *context);
 
 static void array_pop(void *base, size_t *nelp, size_t width,
-		      int (*compar) (const struct pqueue *,
-				     const void *,
-				     const void *), const struct pqueue *ctx);
+		      int (*compar) (const void *, const void *, void *),
+		      void *context);
 
 static void array_update_top(void *base, size_t nel, size_t width,
-			     int (*compar) (const struct pqueue *,
-					    const void *,
-					    const void *),
-			     const struct pqueue *ctx);
+			     int (*compar) (const void *, const void *, void *),
+			     void *context);
 
 void pqueue_init(struct pqueue *q, size_t width,
-		 int (*compar) (const struct pqueue *, const void *,
-				const void *))
+		 int (*compar) (const void *, const void *, void *),
+		 void *context)
 {
 	assert(compar);
 	q->width = width;
 	q->compar = compar;
+	q->context = context;
 	q->base = NULL;
 	q->count = 0;
 	q->capacity = 0;
@@ -39,6 +36,7 @@ void pqueue_init_copy(struct pqueue *q, const struct pqueue *src)
 {
 	q->width = src->width;
 	q->compar = src->compar;
+	q->context = src->context;
 	q->base = xmalloc(src->count * q->width);
 	q->count = src->count;
 	q->capacity = src->capacity;
@@ -50,6 +48,7 @@ void pqueue_assign_copy(struct pqueue *q, const struct pqueue *src)
 {
 	assert(q->width == src->width);
 	assert(q->compar == src->compar);
+	assert(q->context == src->context);
 
 	if (!pqueue_ensure_capacity(q, src->count))
 		xalloc_die();
@@ -90,20 +89,22 @@ void *pqueue_push(struct pqueue *q, const void *val)
 	if (q->count == q->capacity)
 		pqueue_grow(q, 1);
 
-	return array_push(val, q->base, &q->count, q->width, q->compar, q);
+	return array_push(val, q->base, &q->count, q->width, q->compar,
+			  q->context);
 }
 
 void pqueue_pop(struct pqueue *q)
 {
 	assert(q->count);
 
-	array_pop(q->base, &q->count, q->width, q->compar, q);
+	array_pop(q->base, &q->count, q->width, q->compar, q->context);
 }
 
 void pqueue_update_top(struct pqueue *q)
 {
 	assert(q->count);
-	array_update_top(q->base, q->count, q->width, q->compar, q);
+	array_update_top(q->base, q->count, q->width, q->compar,
+			 q->context);
 }
 
 void pqueue_clear(struct pqueue *q)
@@ -123,9 +124,8 @@ void pqueue_trim_excess(struct pqueue *q)
 }
 
 void *array_push(const void *val, void *base, size_t *nelp, size_t width,
-		 int (*compar) (const struct pqueue *,
-				const void *,
-				const void *), const struct pqueue *ctx)
+		 int (*compar) (const void *, const void *, void *),
+		 void *context)
 {
 	const size_t nel = *nelp;
 	size_t icur = nel;
@@ -137,7 +137,7 @@ void *array_push(const void *val, void *base, size_t *nelp, size_t width,
 		void *parent = base + iparent * width;
 
 		/* if cur <= parent, heap condition is satisfied */
-		if (compar(ctx, val, parent) <= 0)
+		if (compar(val, parent, context) <= 0)
 			break;
 
 		/* otherwise, swap(cur,parent) */
@@ -153,9 +153,8 @@ void *array_push(const void *val, void *base, size_t *nelp, size_t width,
 }
 
 void array_pop(void *base, size_t *nelp, size_t width,
-	       int (*compar) (const struct pqueue *,
-			      const void *,
-			      const void *), const struct pqueue *ctx)
+	       int (*compar) (const void *, const void *, void *),
+	       void *context)
 {
 	assert(nelp);
 	assert(*nelp > 0);
@@ -181,7 +180,7 @@ void array_pop(void *base, size_t *nelp, size_t width,
 		void *max;
 
 		// find the child with highest priority
-		if (iright == n || compar(ctx, right, left) <= 0) {
+		if (iright == n || compar(right, left, context) <= 0) {
 			imax = ileft;
 			max = left;
 		} else {
@@ -190,7 +189,7 @@ void array_pop(void *base, size_t *nelp, size_t width,
 		}
 
 		// stop if heap condition is satisfied
-		if (compar(ctx, max, val) <= 0)
+		if (compar(max, val, context) <= 0)
 			break;
 
 		// otherwise swap current with maximum child
@@ -206,9 +205,8 @@ out:
 }
 
 void array_update_top(void *base, size_t nel, size_t width,
-		      int (*compar) (const struct pqueue *,
-				     const void *,
-				     const void *), const struct pqueue *ctx)
+		      int (*compar) (const void *, const void *, void *),
+		      void *context)
 {
 	/* make a temporary copy of the old top */
 	void *val = alloca(width);
@@ -226,7 +224,7 @@ void array_update_top(void *base, size_t nel, size_t width,
 		void *max;
 
 		/* find the child with highest priority */
-		if (iright == nel || compar(ctx, right, left) <= 0) {
+		if (iright == nel || compar(right, left, context) <= 0) {
 			imax = ileft;
 			max = left;
 		} else {
@@ -235,7 +233,7 @@ void array_update_top(void *base, size_t nel, size_t width,
 		}
 
 		/* stop if heap condition is satisfied */
-		if (compar(ctx, max, val) <= 0)
+		if (compar(max, val, context) <= 0)
 			break;
 
 		/* otherwise swap current with maximum child */
