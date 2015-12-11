@@ -40,6 +40,7 @@ static void singleton_setup_fixture()
 static void singleton_setup()
 {
 	static int singleton_elts[] = { 1234 };
+	void *ptr;
 
 	pqueue_init(&pqueue, sizeof(int), compar, NULL);
 	elts = singleton_elts;
@@ -89,7 +90,7 @@ static void unsorted7_setup()
 
 static void teardown()
 {
-	pqueue_deinit(&pqueue);
+	pqueue_destroy(&pqueue);
 }
 
 static void teardown_fixture()
@@ -172,7 +173,7 @@ static void test_push_existing()
 			}
 		}
 
-		pqueue_deinit(&pq);
+		pqueue_destroy(&pq);
 	}
 }
 

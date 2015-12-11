@@ -14,12 +14,12 @@ struct pqueue {
 };
 
 /* create, destroy, assign */
-void pqueue_init(struct pqueue *q, size_t width,
-		 int (*compar) (const void *, const void *, void *),
-		 void *context);
-void pqueue_init_copy(struct pqueue *q, const struct pqueue *src);
-void pqueue_assign_copy(struct pqueue *q, const struct pqueue *src);
-void pqueue_deinit(struct pqueue *q);
+int pqueue_init(struct pqueue *q, size_t width,
+		int (*compar) (const void *, const void *, void *),
+		void *context);
+int pqueue_init_copy(struct pqueue *q, const struct pqueue *src);
+int pqueue_assign_copy(struct pqueue *q, const struct pqueue *src);
+void pqueue_destroy(struct pqueue *q);
 
 /* properties */
 static inline size_t pqueue_count(const struct pqueue *q);
@@ -33,11 +33,11 @@ int pqueue_ensure_capacity(struct pqueue *q, size_t n);
 static inline void *pqueue_top(const struct pqueue *q);
 
 /* methods */
-void *pqueue_push(struct pqueue *q, const void *val);
-void pqueue_pop(struct pqueue *q);
-void pqueue_update_top(struct pqueue *q);
-void pqueue_clear(struct pqueue *q);
-void pqueue_trim_excess(struct pqueue *q);
+int pqueue_push(struct pqueue *q, const void *val);
+int pqueue_pop(struct pqueue *q);
+int pqueue_update_top(struct pqueue *q);
+int pqueue_clear(struct pqueue *q);
+int pqueue_trim_excess(struct pqueue *q);
 
 /* inline funciton definitions */
 size_t pqueue_count(const struct pqueue *q)

@@ -1,27 +1,27 @@
 #include <alloca.h>
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include "coreutil.h"
-#include "xalloc.h"
 #include "pqueue.h"
 
-static void *array_push(const void *val, void *base, size_t *nelp, size_t width,
-			int (*compar) (const void *, const void *, void *),
-			void *context);
-
-static void array_pop(void *base, size_t *nelp, size_t width,
+static int array_push(const void *val, void *base, size_t *nelp, size_t width,
 		      int (*compar) (const void *, const void *, void *),
 		      void *context);
 
-static void array_update_top(void *base, size_t nel, size_t width,
-			     int (*compar) (const void *, const void *, void *),
-			     void *context);
+static int array_pop(void *base, size_t *nelp, size_t width,
+		     int (*compar) (const void *, const void *, void *),
+		     void *context);
 
-void pqueue_init(struct pqueue *q, size_t width,
-		 int (*compar) (const void *, const void *, void *),
-		 void *context)
+static int array_update_top(void *base, size_t nel, size_t width,
+			    int (*compar) (const void *, const void *, void *),
+			    void *context);
+
+int pqueue_init(struct pqueue *q, size_t width,
+		int (*compar) (const void *, const void *, void *),
+		void *context)
 {
 	assert(compar);
 	q->width = width;
@@ -30,34 +30,39 @@ void pqueue_init(struct pqueue *q, size_t width,
 	q->base = NULL;
 	q->count = 0;
 	q->capacity = 0;
+	return 0;
 }
 
-void pqueue_init_copy(struct pqueue *q, const struct pqueue *src)
+int pqueue_init_copy(struct pqueue *q, const struct pqueue *src)
 {
 	q->width = src->width;
 	q->compar = src->compar;
 	q->context = src->context;
-	q->base = xmalloc(src->count * q->width);
+	q->base = malloc(src->count * q->width);
+	if (!q->base)
+		return ENOMEM;
+
 	q->count = src->count;
 	q->capacity = src->capacity;
-
 	memcpy(q->base, src->base, q->count * q->width);
+	return 0;
 }
 
-void pqueue_assign_copy(struct pqueue *q, const struct pqueue *src)
+int pqueue_assign_copy(struct pqueue *q, const struct pqueue *src)
 {
 	assert(q->width == src->width);
 	assert(q->compar == src->compar);
 	assert(q->context == src->context);
 
 	if (!pqueue_ensure_capacity(q, src->count))
-		xalloc_die();
+		return ENOMEM;
 
 	q->count = src->count;
 	memcpy(q->base, src->base, q->count * q->width);
+	return 0;
 }
 
-void pqueue_deinit(struct pqueue *q)
+void pqueue_destroy(struct pqueue *q)
 {
 	free(q->base);
 }
@@ -65,67 +70,88 @@ void pqueue_deinit(struct pqueue *q)
 int pqueue_ensure_capacity(struct pqueue *q, size_t n)
 {
 	if (q->capacity >= n)
-		return 1;
+		return 0;
 
 	void *base = realloc(q->base, n * q->width);
 	if (base) {
 		q->capacity = n;
 		q->base = base;
-		return 1;
-	} else {
 		return 0;
+	} else {
+		return ENOMEM;
 	}
 }
 
-static void pqueue_grow(struct pqueue *q, size_t delta)
+static int pqueue_grow(struct pqueue *q, size_t delta)
 {
-	if (needs_grow(q->count + delta, &q->capacity)) {
-		q->base = xrealloc(q->base, q->capacity * q->width);
+	size_t capacity = q->capacity;
+
+	if (needs_grow(q->count + delta, &capacity)) {
+		void *base = realloc(q->base, capacity * q->width);
+		if (!base)
+			return ENOMEM;
+		q->base = base;
+		q->capacity = capacity;
 	}
+
+	return 0;
 }
 
-void *pqueue_push(struct pqueue *q, const void *val)
+int pqueue_push(struct pqueue *q, const void *val)
 {
-	if (q->count == q->capacity)
-		pqueue_grow(q, 1);
+	int err;
+
+	if (q->count == q->capacity) {
+		if ((err = pqueue_grow(q, 1))) {
+			return err;
+		}
+	}
 
 	return array_push(val, q->base, &q->count, q->width, q->compar,
 			  q->context);
 }
 
-void pqueue_pop(struct pqueue *q)
+int pqueue_pop(struct pqueue *q)
 {
 	assert(q->count);
-
-	array_pop(q->base, &q->count, q->width, q->compar, q->context);
+	return array_pop(q->base, &q->count, q->width, q->compar, q->context);
 }
 
-void pqueue_update_top(struct pqueue *q)
+int pqueue_update_top(struct pqueue *q)
 {
 	assert(q->count);
-	array_update_top(q->base, q->count, q->width, q->compar,
-			 q->context);
+	return array_update_top(q->base, q->count, q->width, q->compar,
+				q->context);
 }
 
-void pqueue_clear(struct pqueue *q)
+int pqueue_clear(struct pqueue *q)
 {
 	q->count = 0;
+	return 0;
 }
 
-void pqueue_trim_excess(struct pqueue *q)
+int pqueue_trim_excess(struct pqueue *q)
 {
-	q->capacity = q->count;
-	if (q->capacity) {
-		q->base = xrealloc(q->base, q->capacity * q->width);
+	size_t capacity = q->count;
+
+	if (capacity) {
+		void *base = realloc(q->base, capacity * q->width);
+		if (base) {
+			q->base = base;
+			q->capacity = capacity;
+		}
 	} else {
 		free(q->base);
 		q->base = NULL;
+		q->capacity = 0;
 	}
+
+	return 0;
 }
 
-void *array_push(const void *val, void *base, size_t *nelp, size_t width,
-		 int (*compar) (const void *, const void *, void *),
-		 void *context)
+int array_push(const void *val, void *base, size_t *nelp, size_t width,
+	       int (*compar) (const void *, const void *, void *),
+	       void *context)
 {
 	const size_t nel = *nelp;
 	size_t icur = nel;
@@ -149,12 +175,12 @@ void *array_push(const void *val, void *base, size_t *nelp, size_t width,
 	// actually copy new element
 	memcpy(cur, val, width);
 	*nelp = nel + 1;
-	return cur;
+	return 0;
 }
 
-void array_pop(void *base, size_t *nelp, size_t width,
-	       int (*compar) (const void *, const void *, void *),
-	       void *context)
+int array_pop(void *base, size_t *nelp, size_t width,
+	      int (*compar) (const void *, const void *, void *),
+	      void *context)
 {
 	assert(nelp);
 	assert(*nelp > 0);
@@ -202,12 +228,15 @@ void array_pop(void *base, size_t *nelp, size_t width,
 	memcpy(cur, val, width);
 out:
 	*nelp = n;
+	return 0;
 }
 
-void array_update_top(void *base, size_t nel, size_t width,
-		      int (*compar) (const void *, const void *, void *),
-		      void *context)
+int array_update_top(void *base, size_t nel, size_t width,
+		     int (*compar) (const void *, const void *, void *),
+		     void *context)
 {
+	assert(nel);
+
 	/* make a temporary copy of the old top */
 	void *val = alloca(width);
 	memcpy(val, base, width);
@@ -244,4 +273,5 @@ void array_update_top(void *base, size_t nel, size_t width,
 
 	/* actually do the copy */
 	memcpy(cur, val, width);
+	return 0;
 }
