@@ -59,7 +59,7 @@ static void empty_setup()
 
 static void empty_teardown()
 {
-	hashset_deinit(&set);
+	hashset_destroy(&set);
 }
 
 static void big_setup_fixture()
@@ -78,7 +78,7 @@ static void big_setup()
 	
 	for (i = 0; i < count; i++) {
 		vals[i] = (int)i;
-		hashset_add(&set, &vals[i]);
+		hashset_set_item(&set, &vals[i]);
 	}
 }
 
@@ -106,7 +106,7 @@ static void big_bad_setup()
 	
 	for (i = 0; i < count; i++) {
 		vals[i] = (int)i;
-		hashset_add(&set, &vals[i]);
+		hashset_set_item(&set, &vals[i]);
 	}
 }
 
@@ -145,7 +145,7 @@ static void test_add()
 {
 	int val = 31337;
 	
-	hashset_add(&set, &val);
+	hashset_set_item(&set, &val);
 	assert_int_equal(hashset_count(&set), count + 1);
 	assert_true(hashset_contains(&set, &val));
 	assert_int_equal(*(int *)hashset_item(&set, &val), val);
@@ -155,8 +155,8 @@ static void test_add_existing()
 {
 	int val = 88888;
 	
-	hashset_add(&set, &val);
-	hashset_add(&set, &val);
+	hashset_set_item(&set, &val);
+	hashset_set_item(&set, &val);
 	assert_int_equal(hashset_count(&set), count + 1);
 	assert_true(hashset_contains(&set, &val));
 	assert_int_equal(*(int *)hashset_item(&set, &val), val);
@@ -166,7 +166,7 @@ static void test_remove()
 {
 	int val = -1;
 	
-	hashset_add(&set, &val);
+	hashset_set_item(&set, &val);
 	hashset_remove(&set, &val);
 	assert_int_equal(hashset_count(&set), count);	
 	assert_false(hashset_contains(&set, &val));

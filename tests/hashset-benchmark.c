@@ -87,7 +87,7 @@ static void time_map_grow(int iters)
 	getrusage(RUSAGE_SELF, &finish);
 
   	report("map_grow", iters, &start, &finish);
-	hashset_deinit(&set);
+	hashset_destroy(&set);
 }
 
 static void time_map_grow_predicted(int iters)
@@ -109,7 +109,7 @@ static void time_map_grow_predicted(int iters)
 	getrusage(RUSAGE_SELF, &finish);
 
   	report("map_predict/grow", iters, &start, &finish);
-	hashset_deinit(&set);
+	hashset_destroy(&set);
 }
 
 static void time_map_replace(int iters)
@@ -134,7 +134,7 @@ static void time_map_replace(int iters)
 	getrusage(RUSAGE_SELF, &finish);
 
   	report("map_replace", iters, &start, &finish);
-	hashset_deinit(&set);
+	hashset_destroy(&set);
 }
 
 static void time_map_fetch(int iters, const int *indices, char const* title)
@@ -161,7 +161,7 @@ static void time_map_fetch(int iters, const int *indices, char const* title)
 	getrusage(RUSAGE_SELF, &finish);
 	srand(r);   // keep compiler from optimizing away r
 	report(title, iters, &start, &finish);
-	hashset_deinit(&set);
+	hashset_destroy(&set);
 }
 
 
@@ -224,7 +224,7 @@ static void time_map_fetch_empty(int iters) {
 	getrusage(RUSAGE_SELF, &finish);
   	srand(r);   // keep compiler from optimizing away r
 	report("map_fetch_empty", iters, &start, &finish);
-	hashset_deinit(&set);
+	hashset_destroy(&set);
 }
 
 
@@ -249,7 +249,7 @@ static void time_map_remove(int iters)
 
 	getrusage(RUSAGE_SELF, &finish);
 	report("map_remove", iters, &start, &finish);
-	hashset_deinit(&set);
+	hashset_destroy(&set);
 }
 
 

@@ -1,40 +1,40 @@
-/* Copyright (c) 2011, Patrick O. Perry
- * Copyright (c) 2005, Google Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following disclaimer
- *       in the documentation and/or other materials provided with the
- *       distribution.
- *     * Neither the names of Patrick O. Perry, Google Inc,. nor the names of
- *       their contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// Copyright (c) 2005, Google Inc.
+// Copyright (c) 2011, Patrick O. Perry
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following disclaimer
+//       in the documentation and/or other materials provided with the
+//       distribution.
+//     * Neither the names of Patrick O. Perry, Google Inc,. nor the names of
+//       their contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 
 #include <assert.h>		// assert
+#include <errno.h>		// ENOMEM
 #include <limits.h>		// CHAR_BIT
 #include <stddef.h>		// size_t, NULL
 #include <stdlib.h>		// free
 #include <string.h>		// memset, memcpy
-#include "xalloc.h"		// xrealloc
 
 #include "hashset.h"
 
@@ -109,46 +109,69 @@ static size_t hashset_bucket_count(const struct hashset *s)
 	return s->nbucket;
 }
 
-static void hashset_init_sized(struct hashset *s,
-			       size_t width,
-			       size_t (*hash) (const void *, void *),
-			       int (*compar) (const void *, const void *,
-					      void *),
-			       void *context,
-			       size_t nbucket)
+static int hashset_init_sized(struct hashset *s,
+			      size_t width,
+			      size_t (*hash) (const void *, void *),
+			      int (*compar) (const void *, const void *,
+				             void *),
+			      void *context,
+			      size_t nbucket)
 {
+	void *buckets;
+	unsigned char *status;
+	int err;
+
 	assert(s);
 	assert(hash);
 	assert(compar);
 	assert(nbucket >= HT_MIN_BUCKETS);
 
-	hashset_init(s, width, hash, compar, context);
+	if ((err = hashset_init(s, width, hash, compar, context)))
+		return err;
 
+	buckets = calloc(nbucket, width);
+	status = calloc(nbucket, sizeof(s->status[0]));
+	if (buckets == NULL || status == NULL) {
+		free(buckets);
+		free(status);
+		hashset_destroy(s);
+		return ENOMEM;
+	}
+
+	s->buckets = buckets;
+	s->status = status;
 	s->nbucket = nbucket;
-	s->buckets = xcalloc(nbucket, width);
-	s->status = xcalloc(nbucket, sizeof(s->status[0]));
-
 	hashset_reset_thresholds(s, nbucket);
+
+	return 0;
 }
 
-static void hashset_init_copy_sized(struct hashset *s,
+static int hashset_init_copy_sized(struct hashset *s,
 				    const struct hashset *src, size_t nbucket)
 {
+	struct hashset_iter it;
+	const void *val;
+	int err;
+
 	assert(s);
 	assert(src);
 	assert(s != src);
 	assert(nbucket >= HT_MIN_BUCKETS);
 
-	struct hashset_iter it;
-	const void *val;
-
-	hashset_init_sized(s, src->width, src->hash, src->compar,
-			   src->context, nbucket);
+	if ((err = hashset_init_sized(s, src->width, src->hash, src->compar,
+				      src->context, nbucket))) {
+		return err;
+	}
 
 	HASHSET_FOREACH(it, src) {
 		val = HASHSET_VAL(it);
-		hashset_add(s, val);
+		if ((err = hashset_set_item(s, val))) {
+			hashset_destroy(s);
+			return err;
+		}
 	}
+
+	return 0;
 }
 
 static int hashset_needs_grow_delta(const struct hashset *s, size_t delta)
@@ -164,7 +187,7 @@ static int hashset_needs_grow_delta(const struct hashset *s, size_t delta)
 	}
 }
 
-static void hashset_grow_delta(struct hashset *s, size_t delta)
+static int hashset_grow_delta(struct hashset *s, size_t delta)
 {
 	assert(delta <= HT_MAX_COUNT - s->nbucket);
 
@@ -172,33 +195,35 @@ static void hashset_grow_delta(struct hashset *s, size_t delta)
 	size_t nbucket0 = s->nbucket;
 	size_t count = count0 + delta;
 	size_t nbucket = min_buckets(count, nbucket0);
+	int err;
 
 	if (nbucket > nbucket0) {
-		/* This is a little delicate:
-		 * hashset_add will call the hash and compar functions,
-		 * which expect the original set as the first argument.
-		 *
-		 * Fortunately, HASHSET_FOREACH, HASHSET_VAL and 
-		 * hashset_deinit do *not* call either of these functions.
-		 */
-		struct hashset old = *s;
+		struct hashset snew;
 		struct hashset_iter it;
 		void *val;
 
-		memset(s, 0, sizeof(*s));
-		hashset_init_sized(s, old.width, old.hash, old.compar,
-				   old.context, nbucket);
-
-		HASHSET_FOREACH(it, &old) {
-			val = HASHSET_VAL(it);
-			hashset_add(s, val);
+		if ((err = hashset_init_sized(&snew, s->width, s->hash,
+					      s->compar, s->context,
+					      nbucket))) {
+			return err;
 		}
 
-		hashset_deinit(&old);
+		HASHSET_FOREACH(it, s) {
+			val = HASHSET_VAL(it);
+			if ((err = hashset_set_item(&snew, val))) {
+				hashset_destroy(&snew);
+				return err;
+			}
+		}
+
+		hashset_destroy(s);
+		*s = snew;
 	}
+
+	return 0;
 }
 
-void hashset_ensure_capacity(struct hashset *s, size_t n)
+int hashset_ensure_capacity(struct hashset *s, size_t n)
 {
 	assert(s);
 	assert(n >= hashset_count(s));
@@ -207,14 +232,16 @@ void hashset_ensure_capacity(struct hashset *s, size_t n)
 
 	if (n > hashset_capacity(s)) {
 		size_t delta = n - hashset_count(s);
-		hashset_grow_delta(s, delta);
+		return hashset_grow_delta(s, delta);
 	}
+
+	return 0;
 }
 
-void hashset_init(struct hashset *s, size_t width,
-		  size_t (*hash) (const void *, void *),
-		  int (*compar) (const void *, const void *, void *),
-		  void *context)
+int hashset_init(struct hashset *s, size_t width,
+		 size_t (*hash) (const void *, void *),
+		 int (*compar) (const void *, const void *, void *),
+		 void *context)
 {
 	assert(s);
 	assert(hash);
@@ -229,28 +256,41 @@ void hashset_init(struct hashset *s, size_t width,
 	s->compar = compar;
 	s->context = context;
 	hashset_reset_thresholds(s, 0);
+
+	return 0;
 }
 
-void hashset_init_copy(struct hashset *s, const struct hashset *src)
+int hashset_init_copy(struct hashset *s, const struct hashset *src)
 {
+	size_t nbucket;
+
 	assert(s);
 	assert(src);
 	assert(s != src);
 
-	size_t nbucket = hashset_bucket_count(src);
-	hashset_init_copy_sized(s, src, nbucket);
+	nbucket = hashset_bucket_count(src);
+	return hashset_init_copy_sized(s, src, nbucket);
 }
 
-void hashset_assign_copy(struct hashset *s, const struct hashset *src)
+int hashset_assign_copy(struct hashset *s, const struct hashset *src)
 {
+	struct hashset snew;
+	int err;
+
 	assert(s);
 	assert(src);
 
-	hashset_deinit(s);
-	hashset_init_copy(s, src);
+	if ((err = hashset_init_copy(&snew, src))) {
+		return err;
+	}
+
+	hashset_destroy(s);
+	*s = snew;
+
+	return 0;
 }
 
-void hashset_deinit(struct hashset *s)
+void hashset_destroy(struct hashset *s)
 {
 	assert(s);
 
@@ -292,7 +332,7 @@ void *hashset_item(const struct hashset *s, const void *key)
 	return NULL;
 }
 
-void *hashset_set_item(struct hashset *s, const void *key)
+int hashset_set_item(struct hashset *s, const void *key)
 {
 	assert(s);
 	assert(key);
@@ -301,26 +341,14 @@ void *hashset_set_item(struct hashset *s, const void *key)
 	void *dst;
 
 	if ((dst = hashset_find(s, key, &pos))) {
-		return memcpy(dst, key, s->width);
+		memcpy(dst, key, s->width);
+		return 0;
 	} else {
 		return hashset_insert(s, &pos, key);
 	}
 }
 
-void *hashset_add(struct hashset *s, const void *val)
-{
-	assert(s);
-	assert(val);
-
-	struct hashset_pos pos;
-	if (hashset_find(s, val, &pos)) {
-		return NULL;
-	} else {
-		return hashset_insert(s, &pos, val);
-	}
-}
-
-void hashset_clear(struct hashset *s)
+int hashset_clear(struct hashset *s)
 {
 	assert(s);
 
@@ -329,6 +357,7 @@ void hashset_clear(struct hashset *s)
 	memset(s->buckets, 0, n * s->width);
 	memset(s->status, 0, n * sizeof(s->status[0]));
 	s->count = 0;
+	return 0;
 }
 
 int hashset_contains(const struct hashset *s, const void *key)
@@ -401,28 +430,33 @@ int hashset_remove(struct hashset *s, const void *key)
 /* MISSING symmetric_except_with */
 /* MISSING to_string */
 
-void hashset_trim_excess(struct hashset *s)
+int hashset_trim_excess(struct hashset *s)
 {
 	assert(s);
 
-	/* This is a little delicate; see hashset_grow_delta for
-	 * explanation. */
 	size_t count = hashset_count(s);
 	size_t nbucket = min_buckets(count, 0);
-	struct hashset old = *s;
+	struct hashset snew;
 	struct hashset_iter it;
 	void *val;
+	int err;
 
-	memset(s, 0, sizeof(*s));
-	hashset_init_sized(s, old.width, old.hash, old.compar, old.context,
-			   nbucket);
-
-	HASHSET_FOREACH(it, &old) {
-		val = HASHSET_VAL(it);
-		hashset_add(s, val);
+	if ((err = hashset_init_sized(&snew, s->width, s->hash, s->compar,
+				      s->context, nbucket))) {
+		return err;
 	}
 
-	hashset_deinit(&old);
+	HASHSET_FOREACH(it, s) {
+		val = HASHSET_VAL(it);
+		if ((err = hashset_set_item(&snew, val))) {
+			hashset_destroy(&snew);
+			return err;
+		}
+	}
+
+	hashset_destroy(s);
+	*s = snew;
+	return 0;
 }
 
 /* MISSING union_with */
@@ -472,16 +506,20 @@ void *hashset_find(const struct hashset *s, const void *key,
 	return NULL;		// table is full and key is not present
 }
 
-void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
-		     const void *val)
+int hashset_insert(struct hashset *s, struct hashset_pos *pos,
+		   const void *val)
 {
+	int err;
+
 	assert(s);
 	assert(pos);
 	assert(pos->existing == HT_MAX_BUCKETS);
 	assert(val);
 
 	if (hashset_needs_grow_delta(s, 1)) {
-		hashset_grow_delta(s, 1);
+		if ((err = hashset_grow_delta(s, 1))) {
+			return err;
+		}
 		hashset_find(s, val, pos);	// need to recompute pos
 	}
 
@@ -499,10 +537,10 @@ void *hashset_insert(struct hashset *s, struct hashset_pos *pos,
 	void *ptr = s->buckets + ix * width;
 	memcpy(ptr, val, width);
 
-	return ptr;
+	return 0;
 }
 
-void hashset_remove_at(struct hashset *s, struct hashset_pos *pos)
+int hashset_remove_at(struct hashset *s, struct hashset_pos *pos)
 {
 	assert(s);
 	assert(pos);
@@ -515,6 +553,7 @@ void hashset_remove_at(struct hashset *s, struct hashset_pos *pos)
 
 	s->count--;
 	s->status[ix] = HT_BUCKET_DELETED;
+	return 0;
 }
 
 struct hashset_iter hashset_iter_make(const struct hashset *s)
