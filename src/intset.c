@@ -1,16 +1,31 @@
+//  Copyright 2015 Patrick O. Perry.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 #include <assert.h>		// assert
-#include <stddef.h>		// ptrdiff_t, size_t, NULL
-#include <stdlib.h>		// free, qsort
+#include <errno.h>		// ENOMEM
+#include <stddef.h>		// size_t, NULL
+#include <stdint.h>		// int64_t
+#include <stdlib.h>		// free, malloc, qsort, realloc
 #include <string.h>		// memcpy, memmove
 #include "coreutil.h"		// needs_grow
-#include "xalloc.h"		// xrealloc
 
 #include "intset.h"
 
 static int compare(const void *px, const void *py)
 {
-	ptrdiff_t x = *(ptrdiff_t *)px;
-	ptrdiff_t y = *(ptrdiff_t *)py;
+	int64_t x = *(int64_t *)px;
+	int64_t y = *(int64_t *)py;
 
 	if (x > y)
 		return +1;
@@ -19,78 +34,89 @@ static int compare(const void *px, const void *py)
 	return 0;
 }
 
-void intset_init(struct intset *s)
+int intset_init(struct intset *s)
 {
 	s->vals = NULL;
 	s->n = 0;
 	s->nmax = 0;
+	return 0;
 }
 
-void intset_init_copy(struct intset *s, const struct intset *src)
+int intset_init_copy(struct intset *s, const struct intset *src)
 {
-	const ptrdiff_t *vals;
+	const int64_t *vals;
 	size_t n;
 
 	intset_get_vals(src, &vals, &n);
-	s->vals = xmalloc(n * sizeof(ptrdiff_t));
+	s->vals = malloc(n * sizeof(int64_t));
+	if (!s->vals) {
+		s->n = 0;
+		s->nmax = 0;
+		return ENOMEM;
+	}
+
 	s->n = n;
 	s->nmax = n;
-	memcpy(s->vals, vals, n * sizeof(ptrdiff_t));
+	memcpy(s->vals, vals, n * sizeof(int64_t));
+	return 0;
 }
 
-void intset_assign_copy(struct intset *s, const struct intset *src)
+int intset_assign_copy(struct intset *s, const struct intset *src)
 {
-	const ptrdiff_t *vals;
+	const int64_t *vals;
 	size_t n;
 
 	intset_get_vals(src, &vals, &n);
-	intset_assign_array(s, vals, n, 1);
+	return intset_assign_array(s, vals, n, 1);
 }
 
-void intset_assign_array(struct intset *s, const ptrdiff_t *vals, size_t n,
-			 int sorted)
+int intset_assign_array(struct intset *s, const int64_t *vals, size_t n,
+			int sorted)
 {
-	intset_ensure_capacity(s, n);
-	memcpy(s->vals, vals, n * sizeof(ptrdiff_t));
+	int err;
+
+	if ((err = intset_ensure_capacity(s, n)))
+		return err;
+
+	memcpy(s->vals, vals, n * sizeof(int64_t));
 	s->n = n;
 
 	if (!sorted) {
-		qsort(s->vals, s->n, sizeof(ptrdiff_t), compare);
+		qsort(s->vals, s->n, sizeof(int64_t), compare);
 	}
+
+	return 0;
 }
 
-void intset_deinit(struct intset *s)
+void intset_destroy(struct intset *s)
 {
 	free(s->vals);
 }
 
-size_t intset_add(struct intset *s, ptrdiff_t val)
+int intset_add(struct intset *s, int64_t val)
 {
 	size_t index;
 
 	if (!intset_find(s, val, &index)) {
-		intset_insert(s, index, val);
+		return intset_insert(s, index, val);
 	}
 
-	return index;
+	return 0;
 }
 
-void intset_clear(struct intset *s)
+int intset_clear(struct intset *s)
 {
 	s->n = 0;
+	return 0;
 }
 
-int intset_contains(const struct intset *s, ptrdiff_t val)
+int intset_contains(const struct intset *s, int64_t val)
 {
 	size_t index;
-	int exists;
-
-	exists = intset_find(s, val, &index);
-
-	return exists;
+	return intset_find(s, val, &index);
 }
 
-int intset_remove(struct intset *s, ptrdiff_t val)
+int intset_remove(struct intset *s, int64_t val)
 {
 	size_t index;
 	int exists;
@@ -102,27 +128,46 @@ int intset_remove(struct intset *s, ptrdiff_t val)
 	return exists;
 }
 
-void intset_ensure_capacity(struct intset *s, size_t n)
+int intset_ensure_capacity(struct intset *s, size_t n)
 {
-	if (needs_grow(n, &s->nmax)) {
-		s->vals = xrealloc(s->vals, s->nmax * sizeof(ptrdiff_t));
+	size_t nmax = s->nmax;
+
+	if (needs_grow(n, &nmax)) {
+		int64_t *vals = realloc(s->vals, nmax * sizeof(int64_t));
+		if (!vals)
+			return ENOMEM;
+		s->vals = vals;
+		s->nmax = nmax;
 	}
+
+	return 0;
 }
 
-void intset_trim_excess(struct intset *s)
+int intset_trim_excess(struct intset *s)
 {
-	if (s->n != s->nmax) {
-		s->nmax = s->n;
-		s->vals = xrealloc(s->vals, s->nmax * sizeof(ptrdiff_t));
+	size_t nmax = s->n;
+
+	if (nmax) {
+		int64_t *vals = realloc(s->vals, nmax * sizeof(int64_t));
+		if (vals) {
+			s->vals = vals;
+			s->nmax = nmax;
+		}
+	} else {
+		free(s->vals);
+		s->vals = NULL;
+		s->nmax = 0;
 	}
+
+	return 0;
 }
 
-int intset_find(const struct intset *s, ptrdiff_t val, size_t *index)
+int intset_find(const struct intset *s, int64_t val, size_t *index)
 {
 	size_t nel = s->n;
-	const ptrdiff_t *base = s->vals;
-	const ptrdiff_t *b = base;
-	const ptrdiff_t *ptr;
+	const int64_t *base = s->vals;
+	const int64_t *b = base;
+	const int64_t *ptr;
 	size_t nz;
 
 	for (nz = nel; nz != 0; nz /= 2) {
@@ -137,14 +182,15 @@ int intset_find(const struct intset *s, ptrdiff_t val, size_t *index)
 		}
 	}
 
-	/* not found */
+	// not found
 	*index = b - base;
 	return 0;
 }
 
-size_t intset_insert(struct intset *s, size_t index, ptrdiff_t val)
+int intset_insert(struct intset *s, size_t index, int64_t val)
 {
 	size_t n, n1, ntail;
+	int err;
 
 	assert(index <= s->n);
 	assert(index == 0 || s->vals[index - 1] < val);
@@ -154,16 +200,18 @@ size_t intset_insert(struct intset *s, size_t index, ptrdiff_t val)
 	n1 = n + 1;
 	ntail = n - index;
 
-	intset_ensure_capacity(s, n1);
+	if ((err = intset_ensure_capacity(s, n1)))
+		return err;
+
 	memmove(s->vals + index + 1, s->vals + index,
-		ntail * sizeof(ptrdiff_t));
+		ntail * sizeof(int64_t));
 	s->vals[index] = val;
 	s->n = n1;
 
-	return ntail;
+	return 0;
 }
 
-size_t intset_remove_at(struct intset *s, size_t index)
+int intset_remove_at(struct intset *s, size_t index)
 {
 	size_t n, n1, ntail;
 
@@ -174,8 +222,8 @@ size_t intset_remove_at(struct intset *s, size_t index)
 	ntail = n1 - index;
 
 	memmove(s->vals + index, s->vals + index + 1,
-		ntail * sizeof(ptrdiff_t));
+		ntail * sizeof(int64_t));
 	s->n = n1;
 
-	return ntail;
+	return 0;
 }
